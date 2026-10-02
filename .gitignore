@@ -1,0 +1,17 @@
+.env
+.venv/
+__pycache__/
+uploads/
+*.pyc
+
+users.json
+chats.json
+chat_history.json
+memory.json
+
+app_backup.py
+app_final_backup.py
+index_final_backup.html
+
+data.csv
+test.txt
