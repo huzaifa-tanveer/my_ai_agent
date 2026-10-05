@@ -564,68 +564,38 @@ Send
 
 <script>
 
-const API_URL = "";
+const API_URL = window.location.origin;
 
-let token =
-    localStorage.getItem("token");
-
-
+let token = localStorage.getItem("token");
 let currentChatId = null;
-
 let selectedFile = null;
 
 
 const authScreen =
-    document.getElementById(
-        "authScreen"
-    );
-
+    document.getElementById("authScreen");
 
 const mainApp =
-    document.getElementById(
-        "mainApp"
-    );
-
+    document.getElementById("mainApp");
 
 const chat =
-    document.getElementById(
-        "chat"
-    );
-
+    document.getElementById("chat");
 
 const chatList =
-    document.getElementById(
-        "chatList"
-    );
-
+    document.getElementById("chatList");
 
 const messageInput =
-    document.getElementById(
-        "messageInput"
-    );
-
+    document.getElementById("messageInput");
 
 const fileInput =
-    document.getElementById(
-        "fileInput"
-    );
-
+    document.getElementById("fileInput");
 
 const fileName =
-    document.getElementById(
-        "fileName"
-    );
+    document.getElementById("fileName");
 
 
-function authHeaders() {
-
-    return {
-        "Authorization":
-            "Bearer " + token
-    };
-
-}
-
+/* =====================================================
+   REQUEST HELPER
+===================================================== */
 
 async function request(
     url,
@@ -636,21 +606,24 @@ async function request(
         options.headers || {};
 
 
-    options.headers[
-        "Authorization"
-    ] =
-        "Bearer " + token;
+    if (token) {
+
+        options.headers["Authorization"] =
+            "Bearer " + token;
+
+    }
 
 
     return fetch(
-       ${API_URL}
-        
+        API_URL + url,
+        options
     );
-
 }
 
 
-/* AUTH */
+/* =====================================================
+   AUTH
+===================================================== */
 
 async function login() {
 
@@ -676,19 +649,19 @@ async function authenticate(
 
     const username =
         document
-        .getElementById(
-            "username"
-        )
-        .value
-        .trim();
+            .getElementById(
+                "username"
+            )
+            .value
+            .trim();
 
 
     const password =
         document
-        .getElementById(
-            "password"
-        )
-        .value;
+            .getElementById(
+                "password"
+            )
+            .value;
 
 
     const error =
@@ -700,39 +673,71 @@ async function authenticate(
     error.textContent = "";
 
 
+    if (
+        !username ||
+        !password
+    ) {
+
+        error.textContent =
+            "Please enter username and password.";
+
+        return;
+    }
+
+
     try {
 
         const response =
             await fetch(
-                API + endpoint,
+                API_URL + endpoint,
                 {
 
                     method: "POST",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
                     body:
                         JSON.stringify({
-                            username,
-                            password
+
+                            username:
+                                username,
+
+                            password:
+                                password
+
                         })
 
                 }
             );
 
 
-        const data =
-            await response.json();
+        let data = {};
+
+
+        try {
+
+            data =
+                await response.json();
+
+        }
+
+        catch {
+
+            data = {};
+
+        }
 
 
         if (!response.ok) {
 
             throw new Error(
-                data.detail
-                || "Authentication failed"
+                data.detail ||
+                "Authentication failed"
             );
 
         }
@@ -748,11 +753,17 @@ async function authenticate(
         );
 
 
-        showApp();
+        await showApp();
 
     }
 
     catch(e) {
+
+        console.error(
+            "AUTH ERROR:",
+            e
+        );
+
 
         error.textContent =
             e.message;
@@ -768,37 +779,58 @@ function logout() {
         "token"
     );
 
+
     token = null;
+
+    currentChatId = null;
 
     location.reload();
 
 }
 
 
-/* APP START */
+/* =====================================================
+   APP START
+===================================================== */
 
 async function showApp() {
 
     authScreen.style.display =
         "none";
 
+
     mainApp.style.display =
         "block";
 
 
-    await loadChats();
+    try {
+
+        await loadChats();
 
 
-    if (!currentChatId) {
+        if (!currentChatId) {
 
-        await newChat();
+            await newChat();
+
+        }
+
+    }
+
+    catch(e) {
+
+        console.error(
+            "APP ERROR:",
+            e
+        );
 
     }
 
 }
 
 
-/* CHAT LIST */
+/* =====================================================
+   CHAT LIST
+===================================================== */
 
 async function loadChats() {
 
@@ -808,11 +840,26 @@ async function loadChats() {
         );
 
 
-    if (response.status === 401) {
+    if (
+        response.status === 401
+    ) {
 
         logout();
 
         return;
+
+    }
+
+
+    if (!response.ok) {
+
+        const data =
+            await response.json();
+
+        throw new Error(
+            data.detail ||
+            "Could not load chats"
+        );
 
     }
 
@@ -825,7 +872,11 @@ async function loadChats() {
         "";
 
 
-    data.chats.forEach(
+    const chats =
+        data.chats || [];
+
+
+    chats.forEach(
         item => {
 
             const div =
@@ -839,8 +890,8 @@ async function loadChats() {
 
 
             if (
-                item.chat_id
-                === currentChatId
+                item.chat_id ===
+                currentChatId
             ) {
 
                 div.classList.add(
@@ -851,7 +902,8 @@ async function loadChats() {
 
 
             div.textContent =
-                item.title;
+                item.title ||
+                "New Chat";
 
 
             div.onclick =
@@ -871,116 +923,187 @@ async function loadChats() {
 }
 
 
-/* NEW CHAT */
+/* =====================================================
+   NEW CHAT
+===================================================== */
 
 async function newChat() {
 
-    const response =
-        await request(
-            "/chats",
-            {
+    try {
 
-                method: "POST",
+        const response =
+            await request(
+                "/chats",
+                {
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+                    method:
+                        "POST",
 
-                body:
-                    JSON.stringify({
-                        title:
-                            "New Chat"
-                    })
+                    headers: {
 
-            }
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            title:
+                                "New Chat"
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.detail ||
+                "Could not create chat"
+            );
+
+        }
+
+
+        currentChatId =
+            data.chat_id;
+
+
+        chat.innerHTML =
+            "";
+
+
+        document
+            .getElementById(
+                "chatTitle"
+            )
+            .textContent =
+                "New Chat";
+
+
+        addMessage(
+            "Hello! 👋 How can I help you?",
+            "agent"
         );
 
 
-    const data =
-        await response.json();
+        await loadChats();
+
+    }
+
+    catch(e) {
+
+        console.error(
+            "NEW CHAT ERROR:",
+            e
+        );
 
 
-    currentChatId =
-        data.chat_id;
+        addMessage(
+            "Error: " + e.message,
+            "agent"
+        );
 
-
-    chat.innerHTML =
-        "";
-
-
-    document
-        .getElementById(
-            "chatTitle"
-        )
-        .textContent =
-            "New Chat";
-
-
-    addMessage(
-        "Hello! 👋 How can I help you?",
-        "agent"
-    );
-
-
-    await loadChats();
+    }
 
 }
 
 
-/* OPEN CHAT */
+/* =====================================================
+   OPEN CHAT
+===================================================== */
 
 async function openChat(
     chatId
 ) {
 
-    currentChatId =
-        chatId;
+    try {
+
+        currentChatId =
+            chatId;
 
 
-    const response =
-        await request(
-            "/chats/"
-            + chatId
-        );
+        const response =
+            await request(
+                "/chats/" +
+                encodeURIComponent(
+                    chatId
+                )
+            );
 
 
-    const data =
-        await response.json();
+        const data =
+            await response.json();
 
 
-    chat.innerHTML =
-        "";
+        if (!response.ok) {
 
-
-    document
-        .getElementById(
-            "chatTitle"
-        )
-        .textContent =
-            data.title;
-
-
-    data.messages.forEach(
-        item => {
-
-            addMessage(
-                item.content,
-                item.role === "user"
-                    ? "user"
-                    : "agent"
+            throw new Error(
+                data.detail ||
+                "Could not open chat"
             );
 
         }
-    );
 
 
-    await loadChats();
+        chat.innerHTML =
+            "";
+
+
+        document
+            .getElementById(
+                "chatTitle"
+            )
+            .textContent =
+                data.title ||
+                "New Chat";
+
+
+        const messages =
+            data.messages || [];
+
+
+        messages.forEach(
+            item => {
+
+                addMessage(
+                    item.content,
+
+                    item.role === "user"
+                        ? "user"
+                        : "agent"
+                );
+
+            }
+        );
+
+
+        await loadChats();
+
+    }
+
+    catch(e) {
+
+        console.error(
+            "OPEN CHAT ERROR:",
+            e
+        );
+
+    }
 
 }
 
 
-/* MESSAGE */
+/* =====================================================
+   MESSAGE DISPLAY
+===================================================== */
 
 function addMessage(
     text,
@@ -1021,7 +1144,7 @@ function addMessage(
     else {
 
         bubble.textContent =
-            text;
+            text || "";
 
     }
 
@@ -1042,7 +1165,9 @@ function addMessage(
 }
 
 
-/* FILE */
+/* =====================================================
+   FILE
+===================================================== */
 
 fileInput.onchange =
     () => {
@@ -1053,8 +1178,8 @@ fileInput.onchange =
 
         fileName.textContent =
             selectedFile
-            ? selectedFile.name
-            : "";
+                ? selectedFile.name
+                : "";
 
     };
 
@@ -1083,7 +1208,8 @@ async function uploadFile() {
             "/upload",
             {
 
-                method: "POST",
+                method:
+                    "POST",
 
                 body:
                     formData
@@ -1099,8 +1225,8 @@ async function uploadFile() {
     if (!response.ok) {
 
         throw new Error(
-            data.detail
-            || "Upload failed"
+            data.detail ||
+            "Upload failed"
         );
 
     }
@@ -1111,23 +1237,31 @@ async function uploadFile() {
 }
 
 
-/* SEND */
+/* =====================================================
+   SEND MESSAGE
+===================================================== */
 
 async function sendMessage() {
 
     const text =
         messageInput
-        .value
-        .trim();
+            .value
+            .trim();
 
 
     if (
-        !text
-        &&
+        !text &&
         !selectedFile
     ) {
 
         return;
+
+    }
+
+
+    if (!currentChatId) {
+
+        await newChat();
 
     }
 
@@ -1145,8 +1279,8 @@ async function sendMessage() {
     if (selectedFile) {
 
         addMessage(
-            "📎 "
-            + selectedFile.name,
+            "📎 " +
+            selectedFile.name,
             "user"
         );
 
@@ -1192,8 +1326,10 @@ async function sendMessage() {
                         "POST",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
                     body:
@@ -1207,8 +1343,8 @@ async function sendMessage() {
 
                             file_path:
                                 uploaded
-                                ? uploaded.file_path
-                                : null
+                                    ? uploaded.file_path
+                                    : null
 
                         })
 
@@ -1220,9 +1356,20 @@ async function sendMessage() {
             await response.json();
 
 
+        if (!response.ok) {
+
+            throw new Error(
+                data.detail ||
+                data.answer ||
+                "Chat request failed"
+            );
+
+        }
+
+
         addMessage(
-            data.answer
-            || "No response.",
+            data.answer ||
+            "No response.",
             "agent"
         );
 
@@ -1257,9 +1404,15 @@ async function sendMessage() {
 
     catch(e) {
 
+        console.error(
+            "CHAT ERROR:",
+            e
+        );
+
+
         addMessage(
-            "Error: "
-            + e.message,
+            "Error: " +
+            e.message,
             "agent"
         );
 
@@ -1268,13 +1421,14 @@ async function sendMessage() {
 }
 
 
-/* VOICE */
+/* =====================================================
+   VOICE
+===================================================== */
 
 function startVoice() {
 
     const SpeechRecognition =
-        window.SpeechRecognition
-        ||
+        window.SpeechRecognition ||
         window.webkitSpeechRecognition;
 
 
@@ -1306,8 +1460,8 @@ function startVoice() {
 
             const text =
                 event
-                .results[0][0]
-                .transcript;
+                    .results[0][0]
+                    .transcript;
 
 
             messageInput.value =
@@ -1321,15 +1475,20 @@ function startVoice() {
 }
 
 
-/* ENTER */
+/* =====================================================
+   ENTER TO SEND
+===================================================== */
 
 messageInput.addEventListener(
     "keydown",
     event => {
 
         if (
-            event.key === "Enter"
+            event.key ===
+            "Enter"
         ) {
+
+            event.preventDefault();
 
             sendMessage();
 
@@ -1339,7 +1498,9 @@ messageInput.addEventListener(
 );
 
 
-/* START */
+/* =====================================================
+   START
+===================================================== */
 
 if (token) {
 
