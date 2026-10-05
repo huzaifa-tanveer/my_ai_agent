@@ -1,1017 +1,1520 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>My AI Agent</title>
-
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-<style>
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    color: #111827;
-}
-
-
-/* LOGIN */
-
-#authScreen {
-
-    min-height: 100vh;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-}
-
-
-.auth-card {
-
-    width: 360px;
-
-    background: white;
-
-    padding: 30px;
-
-    border-radius: 18px;
-
-    box-shadow:
-        0 10px 40px
-        rgba(0,0,0,.1);
-}
-
-
-.auth-card h2 {
-
-    margin-top: 0;
-
-    text-align: center;
-}
-
-
-.auth-card input {
-
-    width: 100%;
-
-    padding: 13px;
-
-    margin-bottom: 12px;
-
-    border:
-        1px solid #ddd;
-
-    border-radius: 9px;
-}
-
-
-.auth-card button {
-
-    width: 100%;
-
-    padding: 12px;
-
-    border: none;
-
-    border-radius: 9px;
-
-    background: #111827;
-
-    color: white;
-
-    cursor: pointer;
-
-    margin-bottom: 8px;
-}
-
-
-.auth-error {
-
-    color: #dc2626;
-
-    font-size: 13px;
-
-    margin-top: 8px;
-}
-
-
-/* MAIN */
-
-#mainApp {
-
-    height: 100vh;
-
-    display: none;
-}
-
-
-.layout {
-
-    height: 100%;
-
-    display: flex;
-}
-
-
-/* SIDEBAR */
-
-.sidebar {
-
-    width: 260px;
-
-    background: #111827;
-
-    color: white;
-
-    padding: 15px;
-
-    display: flex;
-
-    flex-direction: column;
-}
-
-
-.logo {
-
-    font-size: 20px;
-
-    font-weight: bold;
-
-    margin-bottom: 15px;
-}
-
-
-.new-chat {
-
-    padding: 11px;
-
-    border: 1px solid #374151;
-
-    background: #1f2937;
-
-    color: white;
-
-    border-radius: 8px;
-
-    cursor: pointer;
-
-    margin-bottom: 15px;
-}
-
-
-#chatList {
-
-    flex: 1;
-
-    overflow-y: auto;
-}
-
-
-.chat-item {
-
-    padding: 10px;
-
-    margin-bottom: 5px;
-
-    border-radius: 7px;
-
-    cursor: pointer;
-
-    font-size: 14px;
-}
-
-
-.chat-item:hover {
-
-    background: #1f2937;
-}
-
-
-.chat-item.active {
-
-    background: #374151;
-}
-
-
-.logout {
-
-    border: none;
-
-    padding: 10px;
-
-    border-radius: 8px;
-
-    cursor: pointer;
-}
-
-
-/* CHAT */
-
-.chat-area {
-
-    flex: 1;
-
-    display: flex;
-
-    flex-direction: column;
-
-    background: white;
-}
-
-
-.header {
-
-    padding: 16px 22px;
-
-    border-bottom:
-        1px solid #e5e7eb;
-
-    font-weight: bold;
-
-    font-size: 18px;
-}
-
-
-#chat {
-
-    flex: 1;
-
-    overflow-y: auto;
-
-    padding: 25px;
-
-    background: #fafafa;
-}
-
-
-.row {
-
-    display: flex;
-
-    margin-bottom: 15px;
-}
-
-
-.row.user {
-
-    justify-content: flex-end;
-}
-
-
-.row.agent {
-
-    justify-content: flex-start;
-}
-
-
-.bubble {
-
-    max-width: 75%;
-
-    padding: 12px 16px;
-
-    border-radius: 15px;
-
-    line-height: 1.5;
-
-    overflow-wrap: anywhere;
-}
-
-
-.user .bubble {
-
-    background: #111827;
-
-    color: white;
-}
-
-
-.agent .bubble {
-
-    background: #e5e7eb;
-}
-
-
-.agent .bubble pre {
-
-    background: #111827;
-
-    color: white;
-
-    padding: 12px;
-
-    overflow-x: auto;
-
-    border-radius: 8px;
-}
-
-
-/* INPUT */
-
-.input-box {
-
-    padding: 15px;
-
-    border-top:
-        1px solid #ddd;
-}
-
-
-.controls {
-
-    display: flex;
-
-    gap: 8px;
-}
-
-
-#messageInput {
-
-    flex: 1;
-
-    padding: 13px;
-
-    border:
-        1px solid #ddd;
-
-    border-radius: 10px;
-}
-
-
-button {
-
-    cursor: pointer;
-}
-
-
-.send {
-
-    border: none;
-
-    background: #111827;
-
-    color: white;
-
-    padding: 12px 18px;
-
-    border-radius: 9px;
-}
-
-
-.tool-button {
-
-    border: none;
-
-    background: #e5e7eb;
-
-    padding: 11px;
-
-    border-radius: 9px;
-}
-
-
-#fileInput {
-
-    display: none;
-}
-
-
-.file-name {
-
-    margin-top: 7px;
-
-    font-size: 12px;
-
-    color: #6b7280;
-}
-
-
-@media(max-width:700px) {
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My AI Agent</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f3f4f6;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #authScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 380px;
+      background: white;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+    }
+
+    .auth-card h1 {
+      text-align: center;
+      margin-bottom: 22px;
+      font-size: 26px;
+    }
+
+    .auth-card input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    .auth-card input:focus {
+      border-color: #111827;
+    }
+
+    .auth-card button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 9px;
+      background: #111827;
+      color: white;
+      margin-bottom: 9px;
+    }
+
+    .secondary-btn {
+      background: #374151 !important;
+    }
+
+    .link-btn {
+      background: transparent !important;
+      color: #2563eb !important;
+      padding: 6px !important;
+      margin-top: 2px;
+    }
+
+    #authMessage,
+    #forgotMessage,
+    #resetMessage {
+      margin-top: 8px;
+      min-height: 20px;
+      font-size: 14px;
+      color: #ef4444;
+    }
+
+    #appScreen {
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
 
     .sidebar {
-
-        width: 190px;
+      width: 270px;
+      background: #111827;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 14px;
     }
 
-    .bubble {
+    .brand {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      padding: 4px 8px;
+    }
 
+    .new-chat-btn {
+      border: none;
+      background: #1f2937;
+      color: white;
+      border-radius: 10px;
+      padding: 11px;
+      margin-bottom: 14px;
+    }
+
+    #chatList {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .chat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+    }
+
+    .chat-item:hover,
+    .chat-item.active {
+      background: #1f2937;
+    }
+
+    .chat-title {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    .delete-chat {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      font-size: 18px;
+    }
+
+    .delete-chat:hover {
+      color: #f87171;
+    }
+
+    .logout-btn {
+      border: none;
+      background: #374151;
+      color: white;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: white;
+    }
+
+    .topbar {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 15px 20px;
+      font-weight: 700;
+      background: white;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .message-row {
+      display: flex;
+      margin-bottom: 18px;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .message-row.assistant {
+      justify-content: flex-start;
+    }
+
+    .message {
+      max-width: 78%;
+      padding: 12px 15px;
+      border-radius: 14px;
+      line-height: 1.55;
+      word-wrap: break-word;
+    }
+
+    .user .message {
+      background: #111827;
+      color: white;
+    }
+
+    .assistant .message {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .assistant .message pre {
+      overflow-x: auto;
+      background: #111827;
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+
+    .empty-state {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .composer-wrap {
+      padding: 14px 18px 18px;
+      border-top: 1px solid #e5e7eb;
+      background: white;
+    }
+
+    #selectedFile {
+      max-width: 900px;
+      margin: 0 auto 8px;
+      font-size: 13px;
+      color: #4b5563;
+      min-height: 18px;
+    }
+
+    .composer {
+      max-width: 900px;
+      margin: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: white;
+    }
+
+    #messageInput {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    #sendBtn {
+      height: 44px;
+      padding: 0 20px;
+      border: none;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+    }
+
+    #sendBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #appMessage {
+      max-width: 900px;
+      margin: 6px auto 0;
+      color: #ef4444;
+      font-size: 13px;
+      min-height: 16px;
+    }
+
+    @media (max-width: 760px) {
+      .sidebar {
+        width: 200px;
+      }
+
+      .message {
         max-width: 90%;
+      }
     }
-
-}
-
-</style>
-
+  </style>
 </head>
 
 <body>
 
+  <!-- =========================
+       LOGIN
+  ========================== -->
+  <section id="authScreen">
+    <div class="auth-card">
 
-<!-- LOGIN -->
+      <div id="loginPanel">
+        <h1>My AI Agent</h1>
 
-<div id="authScreen">
+        <input
+          id="loginUsername"
+          type="text"
+          placeholder="Username"
+          autocomplete="username"
+        />
 
-<div class="auth-card">
+        <input
+          id="loginPassword"
+          type="password"
+          placeholder="Password"
+          autocomplete="current-password"
+        />
 
-<h2>My AI Agent</h2>
+        <button onclick="login()">
+          Login
+        </button>
 
-<input
-    id="username"
-    placeholder="Username"
->
+        <button
+          class="secondary-btn"
+          onclick="showRegister()"
+        >
+          Create Account
+        </button>
 
-<input
-    id="password"
-    type="password"
-    placeholder="Password"
->
+        <button
+          class="link-btn"
+          onclick="showForgotPassword()"
+        >
+          Forgot Password?
+        </button>
 
-<button onclick="login()">
-Login
-</button>
-
-<button onclick="register()">
-Create Account
-</button>
-
-<div
-    id="authError"
-    class="auth-error"
-></div>
-
-</div>
-
-</div>
-
-
-<!-- APP -->
-
-<div id="mainApp">
-
-<div class="layout">
-
-
-<!-- SIDEBAR -->
-
-<div class="sidebar">
-
-<div class="logo">
-🤖 AI Agent
-</div>
-
-<button
-    class="new-chat"
-    onclick="newChat()"
->
-+ New Chat
-</button>
-
-<div id="chatList"></div>
-
-<button
-    class="logout"
-    onclick="logout()"
->
-Logout
-</button>
-
-</div>
+        <div id="authMessage"></div>
+      </div>
 
 
-<!-- CHAT AREA -->
+      <!-- =========================
+           REGISTER
+      ========================== -->
+      <div id="registerPanel" class="hidden">
 
-<div class="chat-area">
+        <h1>Create Account</h1>
 
-<div
-    id="chatTitle"
-    class="header"
->
-New Chat
-</div>
+        <input
+          id="registerUsername"
+          type="text"
+          placeholder="Username"
+        />
+
+        <input
+          id="registerEmail"
+          type="email"
+          placeholder="Email"
+        />
+
+        <input
+          id="registerPassword"
+          type="password"
+          placeholder="Password"
+        />
+
+        <button onclick="register()">
+          Register
+        </button>
+
+        <button
+          class="secondary-btn"
+          onclick="showLogin()"
+        >
+          Back to Login
+        </button>
+
+        <div id="registerMessage"></div>
+
+      </div>
 
 
-<div id="chat"></div>
+      <!-- =========================
+           FORGOT PASSWORD
+      ========================== -->
+      <div id="forgotPanel" class="hidden">
+
+        <h1>Forgot Password</h1>
+
+        <input
+          id="forgotEmail"
+          type="email"
+          placeholder="Enter your registered email"
+        />
+
+        <button onclick="sendResetCode()">
+          Send Reset Code
+        </button>
+
+        <button
+          class="secondary-btn"
+          onclick="showLogin()"
+        >
+          Back to Login
+        </button>
+
+        <div id="forgotMessage"></div>
+
+      </div>
 
 
-<div class="input-box">
+      <!-- =========================
+           RESET PASSWORD
+      ========================== -->
+      <div id="resetPanel" class="hidden">
 
-<div class="controls">
+        <h1>Reset Password</h1>
 
-<label
-    class="tool-button"
-    for="fileInput"
->
-📎
-</label>
+        <input
+          id="resetEmail"
+          type="email"
+          placeholder="Email"
+        />
 
-<input
-    type="file"
-    id="fileInput"
-    accept=".txt,.csv,.pdf"
->
+        <input
+          id="resetCode"
+          type="text"
+          maxlength="6"
+          placeholder="6-digit code"
+        />
 
-<button
-    class="tool-button"
-    onclick="startVoice()"
->
-🎤
-</button>
+        <input
+          id="newPassword"
+          type="password"
+          placeholder="New password"
+        />
 
-<input
-    id="messageInput"
-    placeholder="Ask anything..."
->
+        <button onclick="resetPassword()">
+          Reset Password
+        </button>
 
-<button
-    class="send"
-    onclick="sendMessage()"
->
-Send
-</button>
+        <button
+          class="secondary-btn"
+          onclick="showLogin()"
+        >
+          Back to Login
+        </button>
 
-</div>
+        <div id="resetMessage"></div>
 
-<div
-    id="fileName"
-    class="file-name"
-></div>
+      </div>
 
-</div>
+    </div>
+  </section>
 
-</div>
 
-</div>
+  <!-- =========================
+       MAIN APP
+  ========================== -->
+  <section
+    id="appScreen"
+    class="hidden"
+  >
 
-</div>
+    <aside class="sidebar">
+
+      <div class="brand">
+        My AI Agent
+      </div>
+
+      <button
+        class="new-chat-btn"
+        onclick="createNewChat()"
+      >
+        + New Chat
+      </button>
+
+      <div id="chatList"></div>
+
+      <button
+        class="logout-btn"
+        onclick="logout()"
+      >
+        Logout
+      </button>
+
+    </aside>
+
+
+    <main class="main">
+
+      <div
+        class="topbar"
+        id="currentChatTitle"
+      >
+        New Chat
+      </div>
+
+      <div id="messages">
+
+        <div class="empty-state">
+          Start a new conversation with your AI Agent.
+        </div>
+
+      </div>
+
+      <div class="composer-wrap">
+
+        <div id="selectedFile"></div>
+
+        <div class="composer">
+
+          <input
+            id="fileInput"
+            type="file"
+            accept=".txt,.csv,.pdf"
+            class="hidden"
+          />
+
+          <button
+            class="icon-btn"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            📎
+          </button>
+
+          <button
+            class="icon-btn"
+            onclick="startVoiceInput()"
+          >
+            🎤
+          </button>
+
+          <input
+            id="messageInput"
+            type="text"
+            placeholder="Type a message..."
+            autocomplete="off"
+          />
+
+          <button
+            id="sendBtn"
+            onclick="sendMessage()"
+          >
+            Send
+          </button>
+
+        </div>
+
+        <div id="appMessage"></div>
+
+      </div>
+
+    </main>
+
+  </section>
 
 
 <script>
 
-const API_URL = window.location.origin;
+const API_URL =
+  window.location.origin;
 
-let token = localStorage.getItem("token");
+
+let token =
+  localStorage.getItem("token") || "";
+
+let currentUsername =
+  localStorage.getItem("username") || "";
+
 let currentChatId = null;
-let selectedFile = null;
 
-
-const authScreen =
-    document.getElementById("authScreen");
-
-const mainApp =
-    document.getElementById("mainApp");
-
-const chat =
-    document.getElementById("chat");
-
-const chatList =
-    document.getElementById("chatList");
-
-const messageInput =
-    document.getElementById("messageInput");
-
-const fileInput =
-    document.getElementById("fileInput");
-
-const fileName =
-    document.getElementById("fileName");
+let uploadedFilePath = null;
 
 
 /* =====================================================
-   REQUEST HELPER
+   PANEL HELPERS
 ===================================================== */
 
-async function request(
-    url,
-    options = {}
-) {
+function hideAuthPanels() {
 
-    options.headers =
-        options.headers || {};
+  document
+    .getElementById("loginPanel")
+    .classList.add("hidden");
+
+  document
+    .getElementById("registerPanel")
+    .classList.add("hidden");
+
+  document
+    .getElementById("forgotPanel")
+    .classList.add("hidden");
+
+  document
+    .getElementById("resetPanel")
+    .classList.add("hidden");
+}
 
 
-    if (token) {
+function showLogin() {
 
-        options.headers["Authorization"] =
-            "Bearer " + token;
+  hideAuthPanels();
 
-    }
+  document
+    .getElementById("loginPanel")
+    .classList.remove("hidden");
+}
 
 
-    return fetch(
-        API_URL + url,
-        options
-    );
+function showRegister() {
+
+  hideAuthPanels();
+
+  document
+    .getElementById("registerPanel")
+    .classList.remove("hidden");
+}
+
+
+function showForgotPassword() {
+
+  hideAuthPanels();
+
+  document
+    .getElementById("forgotPanel")
+    .classList.remove("hidden");
+}
+
+
+function showResetPassword(email = "") {
+
+  hideAuthPanels();
+
+  document
+    .getElementById("resetPanel")
+    .classList.remove("hidden");
+
+  document
+    .getElementById("resetEmail")
+    .value = email;
 }
 
 
 /* =====================================================
-   AUTH
+   MESSAGE HELPERS
+===================================================== */
+
+function setMessage(
+  elementId,
+  message,
+  success = false
+) {
+
+  const element =
+    document.getElementById(
+      elementId
+    );
+
+  element.textContent =
+    message || "";
+
+  element.style.color =
+    success
+      ? "#16a34a"
+      : "#ef4444";
+}
+
+
+async function parseResponse(
+  response
+) {
+
+  let data = {};
+
+  try {
+
+    data =
+      await response.json();
+
+  } catch (error) {
+
+    data = {};
+
+  }
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data.detail ||
+      data.message ||
+      `Request failed (${response.status})`
+    );
+
+  }
+
+  return data;
+}
+
+
+async function request(
+  url,
+  options = {}
+) {
+
+  options.headers =
+    options.headers || {};
+
+
+  if (token) {
+
+    options.headers[
+      "Authorization"
+    ] =
+      "Bearer " + token;
+
+  }
+
+
+  const response =
+    await fetch(
+      API_URL + url,
+      options
+    );
+
+
+  if (
+    response.status === 401
+  ) {
+
+    logout(false);
+
+    throw new Error(
+      "Session expired. Please login again."
+    );
+
+  }
+
+
+  return response;
+}
+
+
+/* =====================================================
+   LOGIN
 ===================================================== */
 
 async function login() {
 
-    await authenticate(
-        "/login"
+  const username =
+    document
+      .getElementById(
+        "loginUsername"
+      )
+      .value
+      .trim();
+
+
+  const password =
+    document
+      .getElementById(
+        "loginPassword"
+      )
+      .value;
+
+
+  if (!username || !password) {
+
+    setMessage(
+      "authMessage",
+      "Please enter username and password."
     );
 
-}
+    return;
+  }
 
 
-async function register() {
-
-    await authenticate(
-        "/register"
-    );
-
-}
+  setMessage(
+    "authMessage",
+    "Please wait...",
+    true
+  );
 
 
-async function authenticate(
-    endpoint
-) {
+  try {
 
-    const username =
-        document
-            .getElementById(
-                "username"
-            )
-            .value
-            .trim();
+    const response =
+      await fetch(
+        API_URL + "/login",
+        {
+          method: "POST",
 
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-    const password =
-        document
-            .getElementById(
-                "password"
-            )
-            .value;
-
-
-    const error =
-        document.getElementById(
-            "authError"
-        );
-
-
-    error.textContent = "";
-
-
-    if (
-        !username ||
-        !password
-    ) {
-
-        error.textContent =
-            "Please enter username and password.";
-
-        return;
-    }
-
-
-    try {
-
-        const response =
-            await fetch(
-                API_URL + endpoint,
-                {
-
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            username:
-                                username,
-
-                            password:
-                                password
-
-                        })
-
-                }
-            );
-
-
-        let data = {};
-
-
-        try {
-
-            data =
-                await response.json();
-
+          body:
+            JSON.stringify({
+              username,
+              password
+            })
         }
-
-        catch {
-
-            data = {};
-
-        }
+      );
 
 
-        if (!response.ok) {
-
-            throw new Error(
-                data.detail ||
-                "Authentication failed"
-            );
-
-        }
+    const data =
+      await parseResponse(
+        response
+      );
 
 
-        token =
-            data.token;
+    token =
+      data.token;
 
 
-        localStorage.setItem(
-            "token",
-            token
-        );
+    currentUsername =
+      data.username;
 
 
-        await showApp();
-
-    }
-
-    catch(e) {
-
-        console.error(
-            "AUTH ERROR:",
-            e
-        );
-
-
-        error.textContent =
-            e.message;
-
-    }
-
-}
-
-
-function logout() {
-
-    localStorage.removeItem(
-        "token"
+    localStorage.setItem(
+      "token",
+      token
     );
 
 
-    token = null;
+    localStorage.setItem(
+      "username",
+      currentUsername
+    );
 
-    currentChatId = null;
 
-    location.reload();
+    setMessage(
+      "authMessage",
+      ""
+    );
+
+
+    await showApp();
+
+
+  } catch (error) {
+
+    setMessage(
+      "authMessage",
+      error.message
+    );
+
+  }
 
 }
 
 
 /* =====================================================
-   APP START
+   REGISTER
+===================================================== */
+
+async function register() {
+
+  const username =
+    document
+      .getElementById(
+        "registerUsername"
+      )
+      .value
+      .trim();
+
+
+  const email =
+    document
+      .getElementById(
+        "registerEmail"
+      )
+      .value
+      .trim();
+
+
+  const password =
+    document
+      .getElementById(
+        "registerPassword"
+      )
+      .value;
+
+
+  if (
+    !username ||
+    !email ||
+    !password
+  ) {
+
+    setMessage(
+      "registerMessage",
+      "Please fill all fields."
+    );
+
+    return;
+  }
+
+
+  setMessage(
+    "registerMessage",
+    "Creating account...",
+    true
+  );
+
+
+  try {
+
+    const response =
+      await fetch(
+        API_URL + "/register",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              username,
+              email,
+              password
+            })
+        }
+      );
+
+
+    const data =
+      await parseResponse(
+        response
+      );
+
+
+    token =
+      data.token;
+
+
+    currentUsername =
+      data.username;
+
+
+    localStorage.setItem(
+      "token",
+      token
+    );
+
+
+    localStorage.setItem(
+      "username",
+      currentUsername
+    );
+
+
+    await showApp();
+
+
+  } catch (error) {
+
+    setMessage(
+      "registerMessage",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   FORGOT PASSWORD
+===================================================== */
+
+async function sendResetCode() {
+
+  const email =
+    document
+      .getElementById(
+        "forgotEmail"
+      )
+      .value
+      .trim();
+
+
+  if (!email) {
+
+    setMessage(
+      "forgotMessage",
+      "Please enter your email."
+    );
+
+    return;
+  }
+
+
+  setMessage(
+    "forgotMessage",
+    "Sending reset code...",
+    true
+  );
+
+
+  try {
+
+    const response =
+      await fetch(
+        API_URL + "/forgot-password",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              email
+            })
+        }
+      );
+
+
+    const data =
+      await parseResponse(
+        response
+      );
+
+
+    setMessage(
+      "forgotMessage",
+      data.message,
+      true
+    );
+
+
+    setTimeout(
+      function() {
+
+        showResetPassword(
+          email
+        );
+
+      },
+      1000
+    );
+
+
+  } catch (error) {
+
+    setMessage(
+      "forgotMessage",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   RESET PASSWORD
+===================================================== */
+
+async function resetPassword() {
+
+  const email =
+    document
+      .getElementById(
+        "resetEmail"
+      )
+      .value
+      .trim();
+
+
+  const code =
+    document
+      .getElementById(
+        "resetCode"
+      )
+      .value
+      .trim();
+
+
+  const newPassword =
+    document
+      .getElementById(
+        "newPassword"
+      )
+      .value;
+
+
+  if (
+    !email ||
+    !code ||
+    !newPassword
+  ) {
+
+    setMessage(
+      "resetMessage",
+      "Please fill all fields."
+    );
+
+    return;
+  }
+
+
+  setMessage(
+    "resetMessage",
+    "Resetting password...",
+    true
+  );
+
+
+  try {
+
+    const response =
+      await fetch(
+        API_URL + "/reset-password",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              email,
+              code,
+              new_password:
+                newPassword
+            })
+        }
+      );
+
+
+    const data =
+      await parseResponse(
+        response
+      );
+
+
+    setMessage(
+      "resetMessage",
+      data.message,
+      true
+    );
+
+
+    setTimeout(
+      function() {
+
+        showLogin();
+
+      },
+      1500
+    );
+
+
+  } catch (error) {
+
+    setMessage(
+      "resetMessage",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+function logout(
+  showMessage = true
+) {
+
+  token = "";
+
+  currentUsername = "";
+
+  currentChatId = null;
+
+  uploadedFilePath = null;
+
+
+  localStorage.removeItem(
+    "token"
+  );
+
+
+  localStorage.removeItem(
+    "username"
+  );
+
+
+  document
+    .getElementById(
+      "appScreen"
+    )
+    .classList
+    .add(
+      "hidden"
+    );
+
+
+  document
+    .getElementById(
+      "authScreen"
+    )
+    .classList
+    .remove(
+      "hidden"
+    );
+
+
+  showLogin();
+
+
+  if (showMessage) {
+
+    setMessage(
+      "authMessage",
+      "Logged out.",
+      true
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   SHOW APP
 ===================================================== */
 
 async function showApp() {
 
-    authScreen.style.display =
-        "none";
+  document
+    .getElementById(
+      "authScreen"
+    )
+    .classList
+    .add(
+      "hidden"
+    );
 
 
-    mainApp.style.display =
-        "block";
+  document
+    .getElementById(
+      "appScreen"
+    )
+    .classList
+    .remove(
+      "hidden"
+    );
 
 
-    try {
+  try {
 
-        await loadChats();
+    await loadChats();
 
 
-        if (!currentChatId) {
+    if (!currentChatId) {
 
-            await newChat();
-
-        }
+      await createNewChat();
 
     }
 
-    catch(e) {
 
-        console.error(
-            "APP ERROR:",
-            e
-        );
+  } catch (error) {
 
-    }
+    setMessage(
+      "appMessage",
+      error.message
+    );
+
+  }
 
 }
 
 
 /* =====================================================
-   CHAT LIST
+   CHATS
 ===================================================== */
 
 async function loadChats() {
 
-    const response =
-        await request(
-            "/chats"
-        );
-
-
-    if (
-        response.status === 401
-    ) {
-
-        logout();
-
-        return;
-
-    }
-
-
-    if (!response.ok) {
-
-        const data =
-            await response.json();
-
-        throw new Error(
-            data.detail ||
-            "Could not load chats"
-        );
-
-    }
-
-
-    const data =
-        await response.json();
-
-
-    chatList.innerHTML =
-        "";
-
-
-    const chats =
-        data.chats || [];
-
-
-    chats.forEach(
-        item => {
-
-            const div =
-                document.createElement(
-                    "div"
-                );
-
-
-            div.className =
-                "chat-item";
-
-
-            if (
-                item.chat_id ===
-                currentChatId
-            ) {
-
-                div.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            div.textContent =
-                item.title ||
-                "New Chat";
-
-
-            div.onclick =
-                () =>
-                    openChat(
-                        item.chat_id
-                    );
-
-
-            chatList.appendChild(
-                div
-            );
-
-        }
+  const response =
+    await request(
+      "/chats"
     );
+
+
+  const data =
+    await parseResponse(
+      response
+    );
+
+
+  const list =
+    document.getElementById(
+      "chatList"
+    );
+
+
+  list.innerHTML = "";
+
+
+  const chats =
+    data.chats || [];
+
+
+  chats.forEach(
+    function(chat) {
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+
+      item.className =
+        "chat-item";
+
+
+      if (
+        chat.chat_id ===
+        currentChatId
+      ) {
+
+        item.classList.add(
+          "active"
+        );
+
+      }
+
+
+      const title =
+        document.createElement(
+          "div"
+        );
+
+
+      title.className =
+        "chat-title";
+
+
+      title.textContent =
+        chat.title ||
+        "New Chat";
+
+
+      title.onclick =
+        function() {
+
+          openChat(
+            chat.chat_id
+          );
+
+        };
+
+
+      const deleteButton =
+        document.createElement(
+          "button"
+        );
+
+
+      deleteButton.className =
+        "delete-chat";
+
+
+      deleteButton.textContent =
+        "×";
+
+
+      deleteButton.onclick =
+        async function(event) {
+
+          event.stopPropagation();
+
+          await deleteChat(
+            chat.chat_id
+          );
+
+        };
+
+
+      item.appendChild(
+        title
+      );
+
+
+      item.appendChild(
+        deleteButton
+      );
+
+
+      list.appendChild(
+        item
+      );
+
+    }
+  );
 
 }
 
 
 /* =====================================================
-   NEW CHAT
+   CREATE CHAT
 ===================================================== */
 
-async function newChat() {
+async function createNewChat() {
 
-    try {
+  try {
 
-        const response =
-            await request(
-                "/chats",
-                {
+    const response =
+      await request(
+        "/chats",
+        {
+          method: "POST",
 
-                    method:
-                        "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-                    headers: {
-
-                        "Content-Type":
-                            "application/json"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            title:
-                                "New Chat"
-
-                        })
-
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.detail ||
-                "Could not create chat"
-            );
-
+          body:
+            JSON.stringify({
+              title:
+                "New Chat"
+            })
         }
+      );
 
 
-        currentChatId =
-            data.chat_id;
+    const data =
+      await parseResponse(
+        response
+      );
 
 
-        chat.innerHTML =
-            "";
+    currentChatId =
+      data.chat_id;
 
 
-        document
-            .getElementById(
-                "chatTitle"
-            )
-            .textContent =
-                "New Chat";
+    uploadedFilePath =
+      null;
 
 
-        addMessage(
-            "Hello! 👋 How can I help you?",
-            "agent"
-        );
+    document
+      .getElementById(
+        "selectedFile"
+      )
+      .textContent =
+      "";
 
 
-        await loadChats();
-
-    }
-
-    catch(e) {
-
-        console.error(
-            "NEW CHAT ERROR:",
-            e
-        );
+    document
+      .getElementById(
+        "currentChatTitle"
+      )
+      .textContent =
+      data.title ||
+      "New Chat";
 
 
-        addMessage(
-            "Error: " + e.message,
-            "agent"
-        );
+    renderMessages([]);
 
-    }
+
+    await loadChats();
+
+
+  } catch (error) {
+
+    setMessage(
+      "appMessage",
+      error.message
+    );
+
+  }
 
 }
 
@@ -1021,218 +1524,256 @@ async function newChat() {
 ===================================================== */
 
 async function openChat(
-    chatId
+  chatId
 ) {
 
-    try {
+  try {
 
-        currentChatId =
-            chatId;
+    currentChatId =
+      chatId;
 
 
-        const response =
-            await request(
-                "/chats/" +
-                encodeURIComponent(
-                    chatId
-                )
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.detail ||
-                "Could not open chat"
-            );
-
-        }
-
-
-        chat.innerHTML =
-            "";
-
-
-        document
-            .getElementById(
-                "chatTitle"
-            )
-            .textContent =
-                data.title ||
-                "New Chat";
-
-
-        const messages =
-            data.messages || [];
-
-
-        messages.forEach(
-            item => {
-
-                addMessage(
-                    item.content,
-
-                    item.role === "user"
-                        ? "user"
-                        : "agent"
-                );
-
-            }
-        );
-
-
-        await loadChats();
-
-    }
-
-    catch(e) {
-
-        console.error(
-            "OPEN CHAT ERROR:",
-            e
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   MESSAGE DISPLAY
-===================================================== */
-
-function addMessage(
-    text,
-    type
-) {
-
-    const row =
-        document.createElement(
-            "div"
-        );
-
-
-    row.className =
-        "row " + type;
-
-
-    const bubble =
-        document.createElement(
-            "div"
-        );
-
-
-    bubble.className =
-        "bubble";
-
-
-    if (
-        type === "agent"
-    ) {
-
-        bubble.innerHTML =
-            marked.parse(
-                text || ""
-            );
-
-    }
-
-    else {
-
-        bubble.textContent =
-            text || "";
-
-    }
-
-
-    row.appendChild(
-        bubble
-    );
-
-
-    chat.appendChild(
-        row
-    );
-
-
-    chat.scrollTop =
-        chat.scrollHeight;
-
-}
-
-
-/* =====================================================
-   FILE
-===================================================== */
-
-fileInput.onchange =
-    () => {
-
-        selectedFile =
-            fileInput.files[0];
-
-
-        fileName.textContent =
-            selectedFile
-                ? selectedFile.name
-                : "";
-
-    };
-
-
-async function uploadFile() {
-
-    if (!selectedFile) {
-
-        return null;
-
-    }
-
-
-    const formData =
-        new FormData();
-
-
-    formData.append(
-        "file",
-        selectedFile
-    );
+    uploadedFilePath =
+      null;
 
 
     const response =
-        await request(
-            "/upload",
-            {
+      await request(
 
-                method:
-                    "POST",
+        "/chats/" +
 
-                body:
-                    formData
+        encodeURIComponent(
+          chatId
+        )
 
-            }
-        );
+      );
 
 
     const data =
-        await response.json();
+      await parseResponse(
+        response
+      );
 
 
-    if (!response.ok) {
+    document
+      .getElementById(
+        "currentChatTitle"
+      )
+      .textContent =
+      data.title ||
+      "New Chat";
 
-        throw new Error(
-            data.detail ||
-            "Upload failed"
-        );
+
+    renderMessages(
+      data.messages || []
+    );
+
+
+    await loadChats();
+
+
+  } catch (error) {
+
+    setMessage(
+      "appMessage",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   DELETE CHAT
+===================================================== */
+
+async function deleteChat(
+  chatId
+) {
+
+  try {
+
+    const response =
+      await request(
+
+        "/chats/" +
+
+        encodeURIComponent(
+          chatId
+        ),
+
+        {
+          method:
+            "DELETE"
+        }
+
+      );
+
+
+    await parseResponse(
+      response
+    );
+
+
+    if (
+      currentChatId ===
+      chatId
+    ) {
+
+      currentChatId =
+        null;
+
+      renderMessages([]);
 
     }
 
 
-    return data;
+    await loadChats();
+
+
+    if (!currentChatId) {
+
+      await createNewChat();
+
+    }
+
+
+  } catch (error) {
+
+    setMessage(
+      "appMessage",
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   MESSAGES
+===================================================== */
+
+function renderMessages(
+  messages
+) {
+
+  const container =
+    document.getElementById(
+      "messages"
+    );
+
+
+  container.innerHTML = "";
+
+
+  if (!messages.length) {
+
+    container.innerHTML =
+      `
+      <div class="empty-state">
+        Start a new conversation with your AI Agent.
+      </div>
+      `;
+
+    return;
+
+  }
+
+
+  messages.forEach(
+    function(message) {
+
+      appendMessage(
+        message.role,
+        message.content
+      );
+
+    }
+  );
+
+}
+
+
+function appendMessage(
+  role,
+  content
+) {
+
+  const container =
+    document.getElementById(
+      "messages"
+    );
+
+
+  const empty =
+    container.querySelector(
+      ".empty-state"
+    );
+
+
+  if (empty) {
+
+    empty.remove();
+
+  }
+
+
+  const row =
+    document.createElement(
+      "div"
+    );
+
+
+  row.className =
+    "message-row " +
+    (
+      role === "user"
+        ? "user"
+        : "assistant"
+    );
+
+
+  const bubble =
+    document.createElement(
+      "div"
+    );
+
+
+  bubble.className =
+    "message";
+
+
+  if (
+    role === "assistant"
+  ) {
+
+    bubble.innerHTML =
+      marked.parse(
+        content || ""
+      );
+
+  } else {
+
+    bubble.textContent =
+      content || "";
+
+  }
+
+
+  row.appendChild(
+    bubble
+  );
+
+
+  container.appendChild(
+    row
+  );
+
+
+  container.scrollTop =
+    container.scrollHeight;
 
 }
 
@@ -1243,259 +1784,380 @@ async function uploadFile() {
 
 async function sendMessage() {
 
-    const text =
-        messageInput
-            .value
-            .trim();
+  const input =
+    document.getElementById(
+      "messageInput"
+    );
 
 
-    if (
-        !text &&
-        !selectedFile
-    ) {
+  const sendButton =
+    document.getElementById(
+      "sendBtn"
+    );
 
-        return;
 
-    }
+  const message =
+    input.value.trim();
+
+
+  if (
+    !message &&
+    !uploadedFilePath
+  ) {
+
+    return;
+
+  }
+
+
+  if (!currentChatId) {
+
+    await createNewChat();
 
 
     if (!currentChatId) {
 
-        await newChat();
+      return;
 
     }
 
-
-    if (text) {
-
-        addMessage(
-            text,
-            "user"
-        );
-
-    }
+  }
 
 
-    if (selectedFile) {
-
-        addMessage(
-            "📎 " +
-            selectedFile.name,
-            "user"
-        );
-
-    }
+  const visibleMessage =
+    message ||
+    "Please analyze the uploaded file.";
 
 
-    messageInput.value =
-        "";
+  appendMessage(
+    "user",
+    visibleMessage
+  );
 
 
-    try {
-
-        let uploaded =
-            null;
+  input.value = "";
 
 
-        if (selectedFile) {
+  sendButton.disabled =
+    true;
 
-            uploaded =
-                await uploadFile();
 
+  try {
+
+    const response =
+      await request(
+        "/chat",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              chat_id:
+                currentChatId,
+
+              message:
+                visibleMessage,
+
+              file_path:
+                uploadedFilePath
+            })
         }
+      );
 
 
-        let finalText =
-            text;
+    const data =
+      await parseResponse(
+        response
+      );
 
 
-        if (!finalText) {
-
-            finalText =
-                "Analyze this file.";
-
-        }
+    appendMessage(
+      "assistant",
+      data.answer || ""
+    );
 
 
-        const response =
-            await request(
-                "/chat",
-                {
+    if (data.title) {
 
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json"
-
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            chat_id:
-                                currentChatId,
-
-                            message:
-                                finalText,
-
-                            file_path:
-                                uploaded
-                                    ? uploaded.file_path
-                                    : null
-
-                        })
-
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.detail ||
-                data.answer ||
-                "Chat request failed"
-            );
-
-        }
-
-
-        addMessage(
-            data.answer ||
-            "No response.",
-            "agent"
-        );
-
-
-        if (data.title) {
-
-            document
-                .getElementById(
-                    "chatTitle"
-                )
-                .textContent =
-                    data.title;
-
-        }
-
-
-        selectedFile =
-            null;
-
-
-        fileInput.value =
-            "";
-
-
-        fileName.textContent =
-            "";
-
-
-        await loadChats();
+      document
+        .getElementById(
+          "currentChatTitle"
+        )
+        .textContent =
+        data.title;
 
     }
 
-    catch(e) {
 
-        console.error(
-            "CHAT ERROR:",
-            e
-        );
+    uploadedFilePath =
+      null;
 
 
-        addMessage(
-            "Error: " +
-            e.message,
-            "agent"
-        );
+    document
+      .getElementById(
+        "selectedFile"
+      )
+      .textContent =
+      "";
 
-    }
+
+    document
+      .getElementById(
+        "fileInput"
+      )
+      .value =
+      "";
+
+
+    await loadChats();
+
+
+  } catch (error) {
+
+    appendMessage(
+      "assistant",
+      "Error: " +
+      error.message
+    );
+
+
+  } finally {
+
+    sendButton.disabled =
+      false;
+
+    input.focus();
+
+  }
 
 }
 
 
 /* =====================================================
-   VOICE
+   FILE UPLOAD
 ===================================================== */
 
-function startVoice() {
+document
+  .getElementById(
+    "fileInput"
+  )
+  .addEventListener(
+    "change",
+    async function(event) {
 
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
+      const file =
+        event.target.files[0];
 
 
-    if (!SpeechRecognition) {
-
-        alert(
-            "Voice recognition is not supported in this browser."
-        );
+      if (!file) {
 
         return;
 
+      }
+
+
+      setMessage(
+        "appMessage",
+        "Uploading file...",
+        true
+      );
+
+
+      const formData =
+        new FormData();
+
+
+      formData.append(
+        "file",
+        file
+      );
+
+
+      try {
+
+        const response =
+          await request(
+            "/upload",
+            {
+              method:
+                "POST",
+
+              body:
+                formData
+            }
+          );
+
+
+        const data =
+          await parseResponse(
+            response
+          );
+
+
+        uploadedFilePath =
+          data.file_path;
+
+
+        document
+          .getElementById(
+            "selectedFile"
+          )
+          .textContent =
+          "Attached: " +
+          (
+            data.filename ||
+            file.name
+          );
+
+
+        setMessage(
+          "appMessage",
+          "File uploaded.",
+          true
+        );
+
+
+      } catch (error) {
+
+        uploadedFilePath =
+          null;
+
+
+        setMessage(
+          "appMessage",
+          error.message
+        );
+
+      }
+
     }
-
-
-    const recognition =
-        new SpeechRecognition();
-
-
-    recognition.lang =
-        "en-US";
-
-
-    recognition.interimResults =
-        false;
-
-
-    recognition.onresult =
-        function(event) {
-
-            const text =
-                event
-                    .results[0][0]
-                    .transcript;
-
-
-            messageInput.value =
-                text;
-
-        };
-
-
-    recognition.start();
-
-}
+  );
 
 
 /* =====================================================
    ENTER TO SEND
 ===================================================== */
 
-messageInput.addEventListener(
+document
+  .getElementById(
+    "messageInput"
+  )
+  .addEventListener(
     "keydown",
-    event => {
+    function(event) {
 
-        if (
-            event.key ===
-            "Enter"
-        ) {
+      if (
+        event.key ===
+        "Enter"
+      ) {
 
-            event.preventDefault();
+        event.preventDefault();
 
-            sendMessage();
+        sendMessage();
 
-        }
+      }
 
     }
-);
+  );
+
+
+/* =====================================================
+   VOICE
+===================================================== */
+
+function startVoiceInput() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+  if (!SpeechRecognition) {
+
+    setMessage(
+      "appMessage",
+      "Voice input is not supported in this browser."
+    );
+
+    return;
+
+  }
+
+
+  const recognition =
+    new SpeechRecognition();
+
+
+  recognition.lang =
+    "en-US";
+
+
+  recognition.interimResults =
+    false;
+
+
+  recognition.maxAlternatives =
+    1;
+
+
+  setMessage(
+    "appMessage",
+    "Listening...",
+    true
+  );
+
+
+  recognition.onresult =
+    function(event) {
+
+      const transcript =
+        event
+          .results[0][0]
+          .transcript;
+
+
+      const input =
+        document.getElementById(
+          "messageInput"
+        );
+
+
+      input.value =
+        input.value
+          ? input.value +
+            " " +
+            transcript
+          : transcript;
+
+
+      setMessage(
+        "appMessage",
+        ""
+      );
+
+    };
+
+
+  recognition.onerror =
+    function(event) {
+
+      setMessage(
+        "appMessage",
+        "Voice error: " +
+        event.error
+      );
+
+    };
+
+
+  recognition.start();
+
+}
 
 
 /* =====================================================
@@ -1504,12 +2166,15 @@ messageInput.addEventListener(
 
 if (token) {
 
-    showApp();
+  showApp();
+
+} else {
+
+  showLogin();
 
 }
 
 </script>
 
 </body>
-
 </html>
