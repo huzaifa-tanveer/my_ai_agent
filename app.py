@@ -6663,6 +6663,181 @@ def chat_endpoint(
 
 # =========================================================
 
+# REGENERATE RESPONSE
+
+# =========================================================
+
+@app.post("/chats/{chat_id}/regenerate")
+def regenerate_response(
+    chat_id: str,
+    authorization: Optional[str] = Header(None),
+):
+
+    username = get_current_user(
+        authorization
+    )
+
+    db = SessionLocal()
+
+    try:
+
+        current_chat = (
+            db.query(Chat)
+            .filter(
+                Chat.chat_id == chat_id,
+                Chat.username == username,
+            )
+            .first()
+        )
+
+        if not current_chat:
+            raise HTTPException(
+                status_code=404,
+                detail="Chat not found",
+            )
+
+        messages = (
+            db.query(Message)
+            .filter(
+                Message.chat_id == chat_id
+            )
+            .order_by(
+                Message.id.asc()
+            )
+            .all()
+        )
+
+        if not messages:
+            raise HTTPException(
+                status_code=400,
+                detail="There is no message to regenerate.",
+            )
+
+        last_user_index = None
+
+        for index in range(
+            len(messages) - 1,
+            -1,
+            -1,
+        ):
+            if messages[index].role == "user":
+                last_user_index = index
+                break
+
+        if last_user_index is None:
+            raise HTTPException(
+                status_code=400,
+                detail="No user message found to regenerate from.",
+            )
+
+        last_user_message = (
+            messages[last_user_index]
+        )
+
+        model_messages = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            }
+        ]
+
+        for item in messages[:last_user_index + 1]:
+            if item.role in [
+                "user",
+                "assistant",
+            ]:
+                model_messages.append(
+                    {
+                        "role": item.role,
+                        "content": item.content,
+                    }
+                )
+
+        try:
+            answer = generate_ai_answer(
+                username,
+                model_messages,
+            )
+
+        except Exception as error:
+            error_text = str(error)
+
+            print(
+                "REGENERATE ERROR:",
+                error_text,
+            )
+
+            if (
+                "429" in error_text
+                or "Rate limit" in error_text
+            ):
+                raise HTTPException(
+                    status_code=429,
+                    detail=(
+                        "Free API limit reached. "
+                        "Please try again later."
+                    ),
+                )
+
+            if "401" in error_text:
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "OpenRouter authentication failed."
+                    ),
+                )
+
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "AI error: "
+                    + error_text
+                ),
+            )
+
+        # Replace assistant output for the latest user turn.
+        for item in messages[last_user_index + 1:]:
+            if item.role == "assistant":
+                db.delete(item)
+
+        new_message = Message(
+            chat_id=chat_id,
+            role="assistant",
+            content=answer,
+        )
+
+        db.add(new_message)
+        db.commit()
+
+        return {
+            "answer": answer,
+            "chat_id": chat_id,
+            "user_message": last_user_message.content,
+        }
+
+    except HTTPException:
+        db.rollback()
+        raise
+
+    except Exception as error:
+        db.rollback()
+
+        print(
+            "REGENERATE SERVER ERROR:",
+            str(error),
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Could not regenerate response.",
+        )
+
+    finally:
+        db.close()
+
+
+# =========================================================
+
 # HEALTH
 
 # =========================================================
