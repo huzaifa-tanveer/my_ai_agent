@@ -14,12 +14,7 @@
 
 <style>
 
-/* =====================================
-   THEME VARIABLES
-===================================== */
-
 :root {
-
     --bg: #f3f4f6;
     --surface: #ffffff;
     --surface-2: #f9fafb;
@@ -47,16 +42,10 @@
 
     --shadow:
         0 12px 35px rgba(0,0,0,.12);
-
 }
 
 
-/* =====================================
-   DARK MODE
-===================================== */
-
 body.dark {
-
     --bg: #0f172a;
     --surface: #111827;
     --surface-2: #1f2937;
@@ -79,13 +68,8 @@ body.dark {
 
     --shadow:
         0 12px 35px rgba(0,0,0,.35);
-
 }
 
-
-/* =====================================
-   GLOBAL
-===================================== */
 
 * {
     box-sizing: border-box;
@@ -94,32 +78,39 @@ body.dark {
     font-family: Arial, sans-serif;
 }
 
+
 html,
 body {
     min-height: 100%;
 }
 
+
 body {
     background: var(--bg);
     color: var(--text);
+
     transition:
         background .2s ease,
         color .2s ease;
 }
+
 
 button,
 input {
     font: inherit;
 }
 
+
 button {
     cursor: pointer;
 }
+
 
 input {
     color: var(--text);
     background: var(--surface);
 }
+
 
 .hidden {
     display: none !important;
@@ -131,7 +122,6 @@ input {
 ===================================== */
 
 .auth-screen {
-
     min-height: 100vh;
 
     display: flex;
@@ -143,14 +133,11 @@ input {
     padding: 20px;
 
     background: var(--bg);
-
 }
 
 
 .auth-card {
-
     width: 100%;
-
     max-width: 380px;
 
     background: var(--surface);
@@ -162,22 +149,18 @@ input {
     padding: 30px;
 
     box-shadow: var(--shadow);
-
 }
 
 
 .auth-card h1,
 .auth-card h2 {
-
     text-align: center;
 
     margin-bottom: 22px;
-
 }
 
 
 .auth-card input {
-
     width: 100%;
 
     padding: 13px 14px;
@@ -189,19 +172,10 @@ input {
     margin-bottom: 12px;
 
     outline: none;
-
-}
-
-
-.auth-card input:focus {
-
-    border-color: var(--muted);
-
 }
 
 
 .auth-card button {
-
     width: 100%;
 
     padding: 12px;
@@ -215,39 +189,28 @@ input {
     color: var(--primary-text);
 
     margin-bottom: 9px;
-
 }
 
 
 .auth-card button.secondary {
-
     background: #374151;
-
     color: white;
-
 }
 
 
 .auth-card button.light {
-
     background: var(--surface-3);
-
     color: var(--text);
-
 }
 
 
 .auth-link {
-
     text-align: center;
-
     margin-top: 8px;
-
 }
 
 
 .auth-link button {
-
     width: auto;
 
     background: transparent;
@@ -257,12 +220,10 @@ input {
     padding: 4px;
 
     margin: 0;
-
 }
 
 
 .auth-message {
-
     min-height: 20px;
 
     margin-top: 8px;
@@ -270,12 +231,10 @@ input {
     font-size: 14px;
 
     text-align: center;
-
 }
 
 
 .email-note {
-
     background: var(--surface-3);
 
     color: var(--muted);
@@ -289,7 +248,6 @@ input {
     font-size: 13px;
 
     text-align: center;
-
 }
 
 
@@ -298,7 +256,6 @@ input {
 ===================================== */
 
 #appScreen {
-
     height: 100vh;
 
     display: flex;
@@ -306,7 +263,6 @@ input {
     overflow: hidden;
 
     background: var(--surface);
-
 }
 
 
@@ -315,7 +271,6 @@ input {
 ===================================== */
 
 .sidebar {
-
     width: 285px;
 
     background: var(--sidebar);
@@ -333,12 +288,10 @@ input {
     transition: transform .25s ease;
 
     z-index: 1200;
-
 }
 
 
 .brand {
-
     font-size: 22px;
 
     font-weight: bold;
@@ -346,7 +299,6 @@ input {
     margin-bottom: 18px;
 
     padding: 4px 8px;
-
 }
 
 
@@ -354,7 +306,6 @@ input {
 .settings-btn,
 .theme-btn,
 .logout-btn {
-
     border: none;
 
     background: var(--sidebar-2);
@@ -366,7 +317,6 @@ input {
     padding: 11px;
 
     margin-bottom: 10px;
-
 }
 
 
@@ -374,9 +324,7 @@ input {
 .settings-btn:hover,
 .theme-btn:hover,
 .logout-btn:hover {
-
     background: var(--sidebar-hover);
-
 }
 
 
@@ -385,14 +333,11 @@ input {
 ===================================== */
 
 .search-box {
-
     margin-bottom: 12px;
-
 }
 
 
 .search-box input {
-
     width: 100%;
 
     border: 1px solid #374151;
@@ -406,21 +351,11 @@ input {
     padding: 10px 11px;
 
     outline: none;
-
 }
 
 
 .search-box input::placeholder {
-
     color: var(--sidebar-muted);
-
-}
-
-
-.search-box input:focus {
-
-    border-color: #6b7280;
-
 }
 
 
@@ -429,16 +364,13 @@ input {
 ===================================== */
 
 #chatList {
-
     flex: 1;
 
     overflow-y: auto;
-
 }
 
 
 .chat-item {
-
     display: flex;
 
     align-items: center;
@@ -450,20 +382,16 @@ input {
     margin-bottom: 5px;
 
     border-radius: 8px;
-
 }
 
 
 .chat-item:hover,
 .chat-item.active {
-
     background: var(--sidebar-2);
-
 }
 
 
 .chat-title {
-
     flex: 1;
 
     padding: 3px;
@@ -477,14 +405,11 @@ input {
     cursor: pointer;
 
     font-size: 14px;
-
 }
 
 
 .chat-action {
-
     width: 28px;
-
     height: 28px;
 
     flex-shrink: 0;
@@ -496,21 +421,17 @@ input {
     background: transparent;
 
     color: var(--sidebar-muted);
-
 }
 
 
 .chat-action:hover {
-
     color: white;
 
     background: var(--sidebar-hover);
-
 }
 
 
 .no-chat-results {
-
     color: var(--sidebar-muted);
 
     text-align: center;
@@ -518,16 +439,14 @@ input {
     font-size: 13px;
 
     padding: 16px 5px;
-
 }
 
 
 /* =====================================
-   SIDEBAR OVERLAY
+   MOBILE OVERLAY
 ===================================== */
 
 .sidebar-overlay {
-
     position: fixed;
 
     inset: 0;
@@ -537,7 +456,6 @@ input {
     z-index: 1100;
 
     display: none;
-
 }
 
 
@@ -546,7 +464,6 @@ input {
 ===================================== */
 
 .main {
-
     flex: 1;
 
     min-width: 0;
@@ -558,7 +475,6 @@ input {
     display: flex;
 
     flex-direction: column;
-
 }
 
 
@@ -567,7 +483,6 @@ input {
 ===================================== */
 
 .topbar {
-
     min-height: 62px;
 
     border-bottom:
@@ -586,12 +501,10 @@ input {
     gap: 12px;
 
     background: var(--surface);
-
 }
 
 
 .topbar-left {
-
     flex: 1;
 
     min-width: 0;
@@ -601,12 +514,10 @@ input {
     align-items: center;
 
     gap: 10px;
-
 }
 
 
 .mobile-menu-btn {
-
     display: none;
 
     border: 1px solid var(--border);
@@ -618,16 +529,13 @@ input {
     border-radius: 8px;
 
     width: 40px;
-
     height: 40px;
 
     font-size: 21px;
-
 }
 
 
 .topbar-title {
-
     flex: 1;
 
     overflow: hidden;
@@ -635,21 +543,17 @@ input {
     white-space: nowrap;
 
     text-overflow: ellipsis;
-
 }
 
 
 .export-buttons {
-
     display: flex;
 
     gap: 8px;
-
 }
 
 
 .export-btn {
-
     border: 1px solid var(--border);
 
     background: var(--surface);
@@ -661,23 +565,11 @@ input {
     padding: 8px 11px;
 
     font-size: 13px;
-
 }
 
 
 .export-btn:hover {
-
     background: var(--surface-3);
-
-}
-
-
-.export-btn:disabled {
-
-    opacity: .5;
-
-    cursor: not-allowed;
-
 }
 
 
@@ -686,7 +578,6 @@ input {
 ===================================== */
 
 #messages {
-
     flex: 1;
 
     overflow-y: auto;
@@ -694,35 +585,29 @@ input {
     padding: 24px;
 
     background: var(--surface);
-
 }
 
 
 .message-row {
-
     display: flex;
 
-    margin-bottom: 18px;
+    flex-direction: column;
 
+    margin-bottom: 18px;
 }
 
 
 .message-row.user {
-
-    justify-content: flex-end;
-
+    align-items: flex-end;
 }
 
 
 .message-row.assistant {
-
-    justify-content: flex-start;
-
+    align-items: flex-start;
 }
 
 
 .message {
-
     max-width: 78%;
 
     padding: 12px 15px;
@@ -733,29 +618,25 @@ input {
 
     word-wrap: break-word;
 
+    overflow-wrap: anywhere;
 }
 
 
 .user .message {
-
     background: var(--primary);
 
     color: var(--primary-text);
-
 }
 
 
 .assistant .message {
-
     background: var(--assistant-message);
 
     color: var(--text);
-
 }
 
 
 .assistant .message pre {
-
     overflow-x: auto;
 
     background: #030712;
@@ -767,21 +648,132 @@ input {
     border-radius: 8px;
 
     margin: 10px 0;
-
 }
 
 
 .assistant .message code {
-
     font-family:
         Consolas,
         monospace;
+}
+
+
+/* =====================================
+   MESSAGE ACTIONS
+===================================== */
+
+.message-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    margin-top: 6px;
+
+    padding-left: 3px;
+}
+
+
+.message-action-btn {
+    border: 1px solid transparent;
+
+    background: transparent;
+
+    color: var(--muted);
+
+    border-radius: 7px;
+
+    padding: 5px 8px;
+
+    font-size: 12px;
+}
+
+
+.message-action-btn:hover {
+    background: var(--surface-3);
+
+    color: var(--text);
+
+    border-color: var(--border-light);
+}
+
+
+.message-action-btn:disabled {
+    opacity: .45;
+
+    cursor: not-allowed;
+}
+
+
+.copy-status {
+    color: var(--success);
+
+    font-size: 11px;
+
+    padding-left: 3px;
+}
+
+
+/* =====================================
+   THINKING
+===================================== */
+
+.thinking-message {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    color: var(--muted);
+
+    font-size: 14px;
+
+    padding: 10px 4px;
+}
+
+
+.thinking-dot {
+    width: 7px;
+    height: 7px;
+
+    background: var(--muted);
+
+    border-radius: 50%;
+
+    animation:
+        pulse 1s infinite ease-in-out;
+}
+
+
+.thinking-dot:nth-child(2) {
+    animation-delay: .15s;
+}
+
+
+.thinking-dot:nth-child(3) {
+    animation-delay: .3s;
+}
+
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: .25;
+        transform: scale(.8);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
 
 }
 
 
 .empty-state {
-
     height: 100%;
 
     display: flex;
@@ -795,7 +787,6 @@ input {
     text-align: center;
 
     padding: 20px;
-
 }
 
 
@@ -804,19 +795,16 @@ input {
 ===================================== */
 
 .composer-wrap {
-
     padding: 14px 18px 18px;
 
     border-top:
         1px solid var(--border-light);
 
     background: var(--surface);
-
 }
 
 
 .composer {
-
     max-width: 900px;
 
     margin: auto;
@@ -826,14 +814,11 @@ input {
     gap: 8px;
 
     align-items: center;
-
 }
 
 
 .icon-btn {
-
     width: 44px;
-
     height: 44px;
 
     flex-shrink: 0;
@@ -845,19 +830,15 @@ input {
     background: var(--surface);
 
     color: var(--text);
-
 }
 
 
 .icon-btn:hover {
-
     background: var(--surface-3);
-
 }
 
 
 #messageInput {
-
     flex: 1;
 
     min-width: 0;
@@ -869,19 +850,10 @@ input {
     padding: 12px 14px;
 
     outline: none;
-
-}
-
-
-#messageInput:focus {
-
-    border-color: var(--muted);
-
 }
 
 
 #sendBtn {
-
     height: 44px;
 
     padding: 0 20px;
@@ -893,22 +865,33 @@ input {
     background: var(--primary);
 
     color: var(--primary-text);
+}
 
+
+#stopBtn {
+    height: 44px;
+
+    padding: 0 16px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: var(--danger);
+
+    color: white;
 }
 
 
 #sendBtn:disabled {
-
     opacity: .55;
 
     cursor: not-allowed;
-
 }
 
 
 #selectedFile,
 #appMessage {
-
     max-width: 900px;
 
     margin: 6px auto;
@@ -916,7 +899,6 @@ input {
     font-size: 13px;
 
     min-height: 16px;
-
 }
 
 
@@ -925,7 +907,6 @@ input {
 ===================================== */
 
 .modal-overlay {
-
     position: fixed;
 
     inset: 0;
@@ -941,12 +922,10 @@ input {
     z-index: 2000;
 
     padding: 20px;
-
 }
 
 
 .settings-card {
-
     background: var(--surface);
 
     color: var(--text);
@@ -964,12 +943,10 @@ input {
     padding: 28px;
 
     box-shadow: var(--shadow);
-
 }
 
 
 .settings-header {
-
     display: flex;
 
     justify-content: space-between;
@@ -977,14 +954,11 @@ input {
     align-items: center;
 
     margin-bottom: 20px;
-
 }
 
 
 .close-btn {
-
     width: 38px;
-
     height: 38px;
 
     border: none;
@@ -996,29 +970,23 @@ input {
     color: var(--text);
 
     font-size: 22px;
-
 }
 
 
 .settings-section {
-
     padding: 18px 0;
 
     border-bottom:
         1px solid var(--border-light);
-
 }
 
 
 .settings-section h3 {
-
     margin-bottom: 14px;
-
 }
 
 
 .profile-row {
-
     margin-bottom: 12px;
 
     padding: 12px;
@@ -1026,53 +994,42 @@ input {
     background: var(--surface-2);
 
     border-radius: 9px;
-
 }
 
 
 .profile-label {
-
     font-size: 12px;
 
     color: var(--muted);
 
     margin-bottom: 4px;
-
 }
 
 
 .profile-value {
-
     font-weight: 600;
 
     word-break: break-word;
-
 }
 
 
 .verified {
-
     color: var(--success);
-
 }
 
 
 .not-verified {
-
     color: var(--danger);
-
 }
 
 
 .settings-section input,
 .danger-section input {
-
     width: 100%;
 
     padding: 12px;
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
     border-radius: 9px;
 
@@ -1081,13 +1038,11 @@ input {
     background: var(--surface);
 
     color: var(--text);
-
 }
 
 
 .settings-section button,
 .danger-section button {
-
     width: 100%;
 
     border: none;
@@ -1099,12 +1054,10 @@ input {
     background: var(--primary);
 
     color: var(--primary-text);
-
 }
 
 
 .danger-section {
-
     background:
         rgba(220,38,38,.08);
 
@@ -1113,37 +1066,30 @@ input {
     padding: 16px;
 
     margin-top: 18px;
-
 }
 
 
 .danger-section h3 {
-
     color: var(--danger);
 
     margin-bottom: 10px;
-
 }
 
 
 .danger-btn {
-
     background:
         var(--danger) !important;
 
     color: white !important;
-
 }
 
 
 .settings-message {
-
     margin-top: 10px;
 
     min-height: 18px;
 
     font-size: 13px;
-
 }
 
 
@@ -1154,13 +1100,10 @@ input {
 @media(max-width: 800px) {
 
     .sidebar {
-
         position: fixed;
 
         left: 0;
-
         top: 0;
-
         bottom: 0;
 
         width: 285px;
@@ -1171,61 +1114,33 @@ input {
         box-shadow:
             8px 0 30px
             rgba(0,0,0,.25);
-
     }
 
 
     .sidebar.open {
-
         transform:
             translateX(0);
-
     }
 
 
     .sidebar-overlay.show {
-
         display: block;
-
     }
 
 
     .mobile-menu-btn {
-
         display: inline-block;
-
     }
 
 
     .topbar {
-
         padding:
             10px 12px;
-
-    }
-
-
-    .export-buttons {
-
-        gap: 5px;
-
-    }
-
-
-    .export-btn {
-
-        padding:
-            8px 9px;
-
-        font-size: 12px;
-
     }
 
 
     .message {
-
         max-width: 90%;
-
     }
 
 }
@@ -1234,81 +1149,61 @@ input {
 @media(max-width: 520px) {
 
     .topbar {
-
         align-items:
             stretch;
 
         flex-direction:
             column;
-
     }
 
 
     .topbar-left {
-
         width: 100%;
-
     }
 
 
     .export-buttons {
-
         width: 100%;
-
     }
 
 
     .export-btn {
-
         flex: 1;
-
     }
 
 
     #messages {
-
         padding:
             18px 12px;
-
     }
 
 
     .composer-wrap {
-
         padding:
             10px;
-
     }
 
 
     .composer {
-
         gap: 5px;
-
     }
 
 
     .icon-btn {
-
         width: 40px;
-
         height: 40px;
-
     }
 
 
-    #sendBtn {
-
+    #sendBtn,
+    #stopBtn {
         padding:
-            0 12px;
-
+            0 11px;
     }
 
 
     .settings-card {
-
         padding: 20px;
-
     }
 
 }
@@ -1320,9 +1215,7 @@ input {
 <body>
 
 
-<!-- =====================================
-     LOGIN
-===================================== -->
+<!-- LOGIN -->
 
 <section
     id="loginScreen"
@@ -1373,9 +1266,7 @@ input {
 </section>
 
 
-<!-- =====================================
-     REGISTER
-===================================== -->
+<!-- REGISTER -->
 
 <section
     id="registerScreen"
@@ -1424,9 +1315,7 @@ input {
 </section>
 
 
-<!-- =====================================
-     VERIFY
-===================================== -->
+<!-- VERIFY -->
 
 <section
     id="verifyScreen"
@@ -1483,9 +1372,7 @@ input {
 </section>
 
 
-<!-- =====================================
-     FORGOT PASSWORD
-===================================== -->
+<!-- FORGOT PASSWORD -->
 
 <section
     id="forgotScreen"
@@ -1523,9 +1410,7 @@ input {
 </section>
 
 
-<!-- =====================================
-     RESET PASSWORD
-===================================== -->
+<!-- RESET PASSWORD -->
 
 <section
     id="resetScreen"
@@ -1576,9 +1461,7 @@ input {
 </section>
 
 
-<!-- =====================================
-     APP
-===================================== -->
+<!-- APP -->
 
 <section
     id="appScreen"
@@ -1656,8 +1539,6 @@ input {
 <main class="main">
 
 
-<!-- TOP BAR -->
-
 <div class="topbar">
 
 
@@ -1704,8 +1585,6 @@ input {
 </div>
 
 
-<!-- MESSAGES -->
-
 <div id="messages">
 
 <div class="empty-state">
@@ -1715,11 +1594,10 @@ input {
 </div>
 
 
-<!-- COMPOSER -->
-
 <div class="composer-wrap">
 
 <div id="selectedFile"></div>
+
 
 <div class="composer">
 
@@ -1729,6 +1607,7 @@ input {
     accept=".txt,.csv,.pdf"
     class="hidden"
 >
+
 
 <button
     class="icon-btn"
@@ -1763,6 +1642,15 @@ input {
     Send
 </button>
 
+
+<button
+    id="stopBtn"
+    class="hidden"
+    onclick="stopGeneration()"
+>
+    ■ Stop
+</button>
+
 </div>
 
 
@@ -1775,9 +1663,7 @@ input {
 </section>
 
 
-<!-- =====================================
-     SETTINGS
-===================================== -->
+<!-- SETTINGS -->
 
 <div
     id="settingsModal"
@@ -1951,7 +1837,6 @@ input {
 
 <script>
 
-
 /* =====================================
    GLOBAL
 ===================================== */
@@ -1983,6 +1868,10 @@ let currentChatId = null;
 let uploadedFilePath = null;
 
 let allChats = [];
+
+let activeController = null;
+
+let isGenerating = false;
 
 
 /* =====================================
@@ -2131,6 +2020,94 @@ function closeSidebarIfMobile() {
 
 
 /* =====================================
+   GENERATION UI
+===================================== */
+
+function setGenerating(
+    generating
+) {
+
+    isGenerating =
+        generating;
+
+
+    const sendButton =
+        document.getElementById(
+            "sendBtn"
+        );
+
+
+    const stopButton =
+        document.getElementById(
+            "stopBtn"
+        );
+
+
+    const input =
+        document.getElementById(
+            "messageInput"
+        );
+
+
+    sendButton.disabled =
+        generating;
+
+
+    input.disabled =
+        generating;
+
+
+    if (generating) {
+
+        stopButton
+            .classList
+            .remove("hidden");
+
+    } else {
+
+        stopButton
+            .classList
+            .add("hidden");
+
+    }
+
+
+    updateRegenerateButtons();
+
+}
+
+
+function stopGeneration() {
+
+    if (
+        activeController
+    ) {
+
+        activeController.abort();
+
+        activeController =
+            null;
+
+    }
+
+
+    removeThinkingMessage();
+
+
+    setGenerating(
+        false
+    );
+
+
+    setAppMessage(
+        "Generation stopped.",
+        true
+    );
+
+}
+
+
+/* =====================================
    AUTH SCREEN HELPERS
 ===================================== */
 
@@ -2239,7 +2216,8 @@ function showResetPassword(
             .getElementById(
                 "resetEmail"
             )
-            .value = email;
+            .value =
+                email;
 
     }
 
@@ -2349,7 +2327,7 @@ function setAppMessage(
 
 
 /* =====================================
-   RESPONSE HELPERS
+   API HELPERS
 ===================================== */
 
 async function parseResponse(
@@ -3120,7 +3098,7 @@ async function loadChats() {
 
 
 /* =====================================
-   RENDER CHAT LIST
+   CHAT LIST
 ===================================== */
 
 function renderChatList(
@@ -3185,11 +3163,6 @@ function renderChatList(
                 || "New Chat";
 
 
-            title.title =
-                chatObject.title
-                || "New Chat";
-
-
             title.onclick =
                 () =>
                     openChat(
@@ -3209,10 +3182,6 @@ function renderChatList(
 
             renameButton.textContent =
                 "✏";
-
-
-            renameButton.title =
-                "Rename Chat";
 
 
             renameButton.onclick =
@@ -3241,10 +3210,6 @@ function renderChatList(
 
             deleteButton.textContent =
                 "×";
-
-
-            deleteButton.title =
-                "Delete Chat";
 
 
             deleteButton.onclick =
@@ -3286,7 +3251,7 @@ function renderChatList(
 
 
 /* =====================================
-   FILTER CHATS
+   SEARCH
 ===================================== */
 
 function filterChats() {
@@ -3380,19 +3345,6 @@ async function renameChat(
     }
 
 
-    if (
-        cleanTitle.length > 100
-    ) {
-
-        alert(
-            "Chat name must be 100 characters or less."
-        );
-
-        return;
-
-    }
-
-
     try {
 
         const response =
@@ -3465,6 +3417,13 @@ async function renameChat(
 ===================================== */
 
 async function createNewChat() {
+
+    if (isGenerating) {
+
+        stopGeneration();
+
+    }
+
 
     try {
 
@@ -3559,6 +3518,13 @@ async function createNewChat() {
 async function openChat(
     chatId
 ) {
+
+    if (isGenerating) {
+
+        stopGeneration();
+
+    }
+
 
     try {
 
@@ -3739,12 +3705,50 @@ function renderMessages(
     }
 
 
+    const lastAssistantIndex =
+        (() => {
+
+            for (
+                let i =
+                    messages.length - 1;
+
+                i >= 0;
+
+                i--
+            ) {
+
+                if (
+                    messages[i].role
+                    === "assistant"
+                ) {
+
+                    return i;
+
+                }
+
+            }
+
+
+            return -1;
+
+        })();
+
+
     messages.forEach(
-        message => {
+        (
+            message,
+            index
+        ) => {
 
             appendMessage(
                 message.role,
-                message.content
+                message.content,
+                (
+                    message.role
+                    === "assistant"
+                    && index
+                    === lastAssistantIndex
+                )
             );
 
         }
@@ -3753,9 +3757,14 @@ function renderMessages(
 }
 
 
+/* =====================================
+   APPEND MESSAGE
+===================================== */
+
 function appendMessage(
     role,
-    content
+    content,
+    allowRegenerate = false
 ) {
 
     const container =
@@ -3773,6 +3782,15 @@ function appendMessage(
     if (empty) {
 
         empty.remove();
+
+    }
+
+
+    if (
+        allowRegenerate
+    ) {
+
+        removeOldRegenerateButtons();
 
     }
 
@@ -3802,6 +3820,10 @@ function appendMessage(
         "message";
 
 
+    bubble.dataset.rawContent =
+        content || "";
+
+
     if (
         role
         === "assistant"
@@ -3825,6 +3847,250 @@ function appendMessage(
     );
 
 
+    if (
+        role
+        === "assistant"
+    ) {
+
+        const actions =
+            document.createElement(
+                "div"
+            );
+
+
+        actions.className =
+            "message-actions";
+
+
+        const copyButton =
+            document.createElement(
+                "button"
+            );
+
+
+        copyButton.className =
+            "message-action-btn";
+
+
+        copyButton.textContent =
+            "📋 Copy";
+
+
+        copyButton.onclick =
+            () => {
+
+                copyResponse(
+                    content || "",
+                    actions
+                );
+
+            };
+
+
+        actions.appendChild(
+            copyButton
+        );
+
+
+        if (
+            allowRegenerate
+        ) {
+
+            const regenerateButton =
+                document.createElement(
+                    "button"
+                );
+
+
+            regenerateButton.className =
+                "message-action-btn regenerate-btn";
+
+
+            regenerateButton.textContent =
+                "↻ Regenerate";
+
+
+            regenerateButton.onclick =
+                () =>
+                    regenerateResponse();
+
+
+            actions.appendChild(
+                regenerateButton
+            );
+
+        }
+
+
+        row.appendChild(
+            actions
+        );
+
+    }
+
+
+    container.appendChild(
+        row
+    );
+
+
+    container.scrollTop =
+        container.scrollHeight;
+
+
+    updateRegenerateButtons();
+
+}
+
+
+/* =====================================
+   COPY RESPONSE
+===================================== */
+
+async function copyResponse(
+    content,
+    actionsContainer
+) {
+
+    try {
+
+        await navigator.clipboard.writeText(
+            content
+        );
+
+
+        const oldStatus =
+            actionsContainer.querySelector(
+                ".copy-status"
+            );
+
+
+        if (oldStatus) {
+
+            oldStatus.remove();
+
+        }
+
+
+        const status =
+            document.createElement(
+                "span"
+            );
+
+
+        status.className =
+            "copy-status";
+
+
+        status.textContent =
+            "Copied!";
+
+
+        actionsContainer.appendChild(
+            status
+        );
+
+
+        setTimeout(
+            () => {
+
+                status.remove();
+
+            },
+            1500
+        );
+
+
+    } catch (error) {
+
+        setAppMessage(
+            "Could not copy response."
+        );
+
+    }
+
+}
+
+
+/* =====================================
+   REGENERATE BUTTON CONTROL
+===================================== */
+
+function removeOldRegenerateButtons() {
+
+    document
+        .querySelectorAll(
+            ".regenerate-btn"
+        )
+        .forEach(
+            button => {
+
+                button.remove();
+
+            }
+        );
+
+}
+
+
+function updateRegenerateButtons() {
+
+    document
+        .querySelectorAll(
+            ".regenerate-btn"
+        )
+        .forEach(
+            button => {
+
+                button.disabled =
+                    isGenerating;
+
+            }
+        );
+
+}
+
+
+/* =====================================
+   THINKING INDICATOR
+===================================== */
+
+function addThinkingMessage() {
+
+    removeThinkingMessage();
+
+
+    const container =
+        document.getElementById(
+            "messages"
+        );
+
+
+    const row =
+        document.createElement(
+            "div"
+        );
+
+
+    row.id =
+        "thinkingRow";
+
+
+    row.className =
+        "message-row assistant";
+
+
+    row.innerHTML =
+        `
+        <div class="thinking-message">
+            <span>Thinking</span>
+            <span class="thinking-dot"></span>
+            <span class="thinking-dot"></span>
+            <span class="thinking-dot"></span>
+        </div>
+        `;
+
+
     container.appendChild(
         row
     );
@@ -3836,21 +4102,39 @@ function appendMessage(
 }
 
 
+function removeThinkingMessage() {
+
+    const thinking =
+        document.getElementById(
+            "thinkingRow"
+        );
+
+
+    if (thinking) {
+
+        thinking.remove();
+
+    }
+
+}
+
+
 /* =====================================
    SEND MESSAGE
 ===================================== */
 
 async function sendMessage() {
 
+    if (isGenerating) {
+
+        return;
+
+    }
+
+
     const input =
         document.getElementById(
             "messageInput"
-        );
-
-
-    const sendButton =
-        document.getElementById(
-            "sendBtn"
         );
 
 
@@ -3890,8 +4174,21 @@ async function sendMessage() {
         "";
 
 
-    sendButton.disabled =
-        true;
+    setAppMessage(
+        ""
+    );
+
+
+    setGenerating(
+        true
+    );
+
+
+    addThinkingMessage();
+
+
+    activeController =
+        new AbortController();
 
 
     try {
@@ -3921,7 +4218,10 @@ async function sendMessage() {
                             file_path:
                                 uploadedFilePath
 
-                        })
+                        }),
+
+                    signal:
+                        activeController.signal
 
                 }
             );
@@ -3933,14 +4233,20 @@ async function sendMessage() {
             );
 
 
+        removeThinkingMessage();
+
+
         appendMessage(
             "assistant",
             data.answer
-            || ""
+            || "",
+            true
         );
 
 
-        if (data.title) {
+        if (
+            data.title
+        ) {
 
             document
                 .getElementById(
@@ -3980,20 +4286,187 @@ async function sendMessage() {
 
     } catch (error) {
 
-        appendMessage(
-            "assistant",
-            "Error: "
-            + error.message
-        );
+        removeThinkingMessage();
+
+
+        if (
+            error.name
+            === "AbortError"
+        ) {
+
+            setAppMessage(
+                "Generation stopped.",
+                true
+            );
+
+        } else {
+
+            appendMessage(
+                "assistant",
+                "Error: "
+                + error.message,
+                true
+            );
+
+        }
 
 
     } finally {
 
-        sendButton.disabled =
-            false;
+        activeController =
+            null;
+
+
+        setGenerating(
+            false
+        );
 
 
         input.focus();
+
+    }
+
+}
+
+
+/* =====================================
+   REGENERATE RESPONSE
+===================================== */
+
+async function regenerateResponse() {
+
+    if (
+        !currentChatId
+        || isGenerating
+    ) {
+
+        return;
+
+    }
+
+
+    setAppMessage(
+        ""
+    );
+
+
+    setGenerating(
+        true
+    );
+
+
+    addThinkingMessage();
+
+
+    activeController =
+        new AbortController();
+
+
+    try {
+
+        const response =
+            await request(
+                "/chats/"
+                + encodeURIComponent(
+                    currentChatId
+                )
+                + "/regenerate",
+                {
+
+                    method:
+                        "POST",
+
+                    signal:
+                        activeController.signal
+
+                }
+            );
+
+
+        const data =
+            await parseResponse(
+                response
+            );
+
+
+        removeThinkingMessage();
+
+
+        /*
+        Backend latest assistant response ko
+        database mein replace karta hai.
+        Fresh chat reload karna safest hai.
+        */
+
+        const chatResponse =
+            await request(
+                "/chats/"
+                + encodeURIComponent(
+                    currentChatId
+                )
+            );
+
+
+        const chatData =
+            await parseResponse(
+                chatResponse
+            );
+
+
+        document
+            .getElementById(
+                "currentChatTitle"
+            )
+            .textContent =
+                chatData.title
+                || "New Chat";
+
+
+        renderMessages(
+            chatData.messages
+            || []
+        );
+
+
+        setAppMessage(
+            "Response regenerated.",
+            true
+        );
+
+
+    } catch (error) {
+
+        removeThinkingMessage();
+
+
+        if (
+            error.name
+            === "AbortError"
+        ) {
+
+            setAppMessage(
+                "Regeneration stopped.",
+                true
+            );
+
+        } else {
+
+            setAppMessage(
+                error.message
+            );
+
+        }
+
+
+    } finally {
+
+        activeController =
+            null;
+
+
+        setGenerating(
+            false
+        );
 
     }
 
@@ -4015,6 +4488,7 @@ document
             if (
                 event.key
                 === "Enter"
+                && !event.shiftKey
             ) {
 
                 event.preventDefault();
@@ -4232,49 +4706,15 @@ async function exportChat(
     }
 
 
-    if (
-        format !== "txt"
-        && format !== "pdf"
-    ) {
+    try {
 
         setAppMessage(
-            "Invalid export format."
+            "Preparing "
+            + format.toUpperCase()
+            + " export...",
+            true
         );
 
-        return;
-
-    }
-
-
-    const txtButton =
-        document.getElementById(
-            "exportTxtBtn"
-        );
-
-
-    const pdfButton =
-        document.getElementById(
-            "exportPdfBtn"
-        );
-
-
-    txtButton.disabled =
-        true;
-
-
-    pdfButton.disabled =
-        true;
-
-
-    setAppMessage(
-        "Preparing "
-        + format.toUpperCase()
-        + " export...",
-        true
-    );
-
-
-    try {
 
         const response =
             await request(
@@ -4417,16 +4857,6 @@ async function exportChat(
             error.message
         );
 
-
-    } finally {
-
-        txtButton.disabled =
-            false;
-
-
-        pdfButton.disabled =
-            false;
-
     }
 
 }
@@ -4447,18 +4877,6 @@ async function openSettings() {
         )
         .classList
         .remove("hidden");
-
-
-    setMessage(
-        "changePasswordMessage",
-        ""
-    );
-
-
-    setMessage(
-        "deleteAccountMessage",
-        ""
-    );
 
 
     try {
@@ -4611,20 +5029,6 @@ async function changePassword() {
         setMessage(
             "changePasswordMessage",
             "New passwords do not match."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        newPassword.length < 6
-    ) {
-
-        setMessage(
-            "changePasswordMessage",
-            "New password must be at least 6 characters."
         );
 
         return;
@@ -4856,6 +5260,18 @@ async function deleteAccount() {
 function logout(
     showMessage = true
 ) {
+
+    if (
+        activeController
+    ) {
+
+        activeController.abort();
+
+        activeController =
+            null;
+
+    }
+
 
     token =
         "";
