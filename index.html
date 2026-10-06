@@ -266,8 +266,42 @@ button {
 
 .topbar {
     border-bottom: 1px solid #e5e7eb;
-    padding: 15px 20px;
+    padding: 12px 20px;
     font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.topbar-title {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.export-btn {
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #111827;
+    border-radius: 8px;
+    padding: 8px 11px;
+    font-size: 13px;
+}
+
+.export-btn:hover {
+    background: #f3f4f6;
+}
+
+.export-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 #messages {
@@ -508,6 +542,19 @@ button {
         max-width: 90%;
     }
 
+    .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .export-buttons {
+        width: 100%;
+    }
+
+    .export-btn {
+        flex: 1;
+    }
+
 }
 
 </style>
@@ -517,9 +564,7 @@ button {
 <body>
 
 
-<!-- =====================================
-     LOGIN
-===================================== -->
+<!-- LOGIN -->
 
 <section
     id="loginScreen"
@@ -570,9 +615,7 @@ button {
 </section>
 
 
-<!-- =====================================
-     REGISTER
-===================================== -->
+<!-- REGISTER -->
 
 <section
     id="registerScreen"
@@ -621,9 +664,7 @@ button {
 </section>
 
 
-<!-- =====================================
-     VERIFY EMAIL
-===================================== -->
+<!-- VERIFY -->
 
 <section
     id="verifyScreen"
@@ -680,9 +721,7 @@ button {
 </section>
 
 
-<!-- =====================================
-     FORGOT PASSWORD
-===================================== -->
+<!-- FORGOT -->
 
 <section
     id="forgotScreen"
@@ -720,9 +759,7 @@ button {
 </section>
 
 
-<!-- =====================================
-     RESET PASSWORD
-===================================== -->
+<!-- RESET -->
 
 <section
     id="resetScreen"
@@ -773,9 +810,7 @@ button {
 </section>
 
 
-<!-- =====================================
-     APP
-===================================== -->
+<!-- APP -->
 
 <section
     id="appScreen"
@@ -827,11 +862,35 @@ button {
 
 <main class="main">
 
+<div class="topbar">
+
 <div
-    class="topbar"
+    class="topbar-title"
     id="currentChatTitle"
 >
     New Chat
+</div>
+
+<div class="export-buttons">
+
+<button
+    class="export-btn"
+    id="exportTxtBtn"
+    onclick="exportChat('txt')"
+>
+    📄 Export TXT
+</button>
+
+<button
+    class="export-btn"
+    id="exportPdfBtn"
+    onclick="exportChat('pdf')"
+>
+    📕 Export PDF
+</button>
+
+</div>
+
 </div>
 
 
@@ -894,9 +953,7 @@ button {
 </section>
 
 
-<!-- =====================================
-     SETTINGS MODAL
-===================================== -->
+<!-- SETTINGS -->
 
 <div
     id="settingsModal"
@@ -1071,20 +1128,16 @@ button {
 const API_URL =
     window.location.origin;
 
-
 let token =
     localStorage.getItem("token") || "";
 
-
 let currentUsername =
     localStorage.getItem("username") || "";
-
 
 let pendingVerificationEmail =
     localStorage.getItem(
         "pendingVerificationEmail"
     ) || "";
-
 
 let currentChatId = null;
 
@@ -1193,8 +1246,7 @@ function showVerificationScreen(email = "") {
 
     if (email) {
 
-        pendingVerificationEmail =
-            email;
+        pendingVerificationEmail = email;
 
         localStorage.setItem(
             "pendingVerificationEmail",
@@ -1205,16 +1257,14 @@ function showVerificationScreen(email = "") {
 
 
     const finalEmail =
-        email
-        || pendingVerificationEmail;
+        email || pendingVerificationEmail;
 
 
     document
         .getElementById(
             "verificationEmail"
         )
-        .value =
-            finalEmail;
+        .value = finalEmail;
 
 
     document
@@ -1223,8 +1273,7 @@ function showVerificationScreen(email = "") {
         )
         .textContent =
             finalEmail
-                ? "Verification email: "
-                  + finalEmail
+                ? "Verification email: " + finalEmail
                 : "";
 
 }
@@ -1422,8 +1471,7 @@ async function login() {
             );
 
 
-        token =
-            data.token;
+        token = data.token;
 
         currentUsername =
             data.username;
@@ -1517,8 +1565,7 @@ async function register() {
                 API_URL + "/register",
                 {
 
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
                         "Content-Type":
@@ -1622,8 +1669,7 @@ async function verifyEmail() {
                 API_URL + "/verify-email",
                 {
 
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
                         "Content-Type":
@@ -1650,13 +1696,9 @@ async function verifyEmail() {
             "pendingVerificationEmail"
         );
 
+        pendingVerificationEmail = "";
 
-        pendingVerificationEmail =
-            "";
-
-
-        token =
-            data.token;
+        token = data.token;
 
         currentUsername =
             data.username;
@@ -1689,7 +1731,7 @@ async function verifyEmail() {
 
 
 /* =====================================
-   RESEND VERIFICATION
+   RESEND VERIFY
 ===================================== */
 
 async function resendVerificationCode() {
@@ -1723,8 +1765,7 @@ async function resendVerificationCode() {
                 + "/resend-verification-code",
                 {
 
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
                         "Content-Type":
@@ -1800,8 +1841,7 @@ async function sendResetCode() {
                 + "/forgot-password",
                 {
 
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
                         "Content-Type":
@@ -1903,8 +1943,7 @@ async function resetPassword() {
                 + "/reset-password",
                 {
 
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
                         "Content-Type":
@@ -2100,8 +2139,6 @@ function renderChatList(
                 );
 
 
-            /* RENAME BUTTON */
-
             const renameButton =
                 document.createElement(
                     "button"
@@ -2132,8 +2169,6 @@ function renderChatList(
 
                 };
 
-
-            /* DELETE BUTTON */
 
             const deleteButton =
                 document.createElement(
@@ -2259,9 +2294,7 @@ async function renameChat(
 
 
     if (newTitle === null) {
-
         return;
-
     }
 
 
@@ -2302,8 +2335,7 @@ async function renameChat(
                 + "/title",
                 {
 
-                    method:
-                        "PATCH",
+                    method: "PATCH",
 
                     headers: {
                         "Content-Type":
@@ -2343,7 +2375,6 @@ async function renameChat(
 
         await loadChats();
 
-
         filterChats();
 
 
@@ -2371,8 +2402,7 @@ async function createNewChat() {
                 "/chats",
                 {
 
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
                         "Content-Type":
@@ -2505,7 +2535,6 @@ async function openChat(
 
         await loadChats();
 
-
         filterChats();
 
 
@@ -2535,9 +2564,7 @@ async function deleteChat(
 
 
     if (!confirmed) {
-
         return;
-
     }
 
 
@@ -2575,7 +2602,6 @@ async function deleteChat(
 
         await loadChats();
 
-
         filterChats();
 
 
@@ -2611,8 +2637,7 @@ function renderMessages(
         );
 
 
-    container.innerHTML =
-        "";
+    container.innerHTML = "";
 
 
     if (!messages.length) {
@@ -2662,9 +2687,7 @@ function appendMessage(
 
 
     if (empty) {
-
         empty.remove();
-
     }
 
 
@@ -2776,12 +2799,9 @@ async function sendMessage() {
     );
 
 
-    input.value =
-        "";
+    input.value = "";
 
-
-    sendButton.disabled =
-        true;
+    sendButton.disabled = true;
 
 
     try {
@@ -2791,8 +2811,7 @@ async function sendMessage() {
                 "/chat",
                 {
 
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
                         "Content-Type":
@@ -2863,7 +2882,6 @@ async function sendMessage() {
 
         await loadChats();
 
-
         filterChats();
 
 
@@ -2933,9 +2951,7 @@ document
 
 
             if (!file) {
-
                 return;
-
             }
 
 
@@ -3097,6 +3113,211 @@ function startVoiceInput() {
 
 
     recognition.start();
+
+}
+
+
+/* =====================================
+   EXPORT CHAT
+===================================== */
+
+async function exportChat(
+    format
+) {
+
+    if (!currentChatId) {
+
+        setAppMessage(
+            "Please select a chat first."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        format !== "txt"
+        && format !== "pdf"
+    ) {
+
+        setAppMessage(
+            "Invalid export format."
+        );
+
+        return;
+
+    }
+
+
+    const txtButton =
+        document.getElementById(
+            "exportTxtBtn"
+        );
+
+
+    const pdfButton =
+        document.getElementById(
+            "exportPdfBtn"
+        );
+
+
+    txtButton.disabled = true;
+    pdfButton.disabled = true;
+
+
+    setAppMessage(
+        "Preparing "
+        + format.toUpperCase()
+        + " export...",
+        true
+    );
+
+
+    try {
+
+        const response =
+            await request(
+                "/chats/"
+                + encodeURIComponent(
+                    currentChatId
+                )
+                + "/export/"
+                + format
+            );
+
+
+        if (!response.ok) {
+
+            let data = {};
+
+            try {
+                data =
+                    await response.json();
+            } catch (error) {}
+
+
+            throw new Error(
+                data.detail
+                || data.message
+                || "Export failed."
+            );
+
+        }
+
+
+        const blob =
+            await response.blob();
+
+
+        let filename =
+            "chat." + format;
+
+
+        const disposition =
+            response.headers.get(
+                "Content-Disposition"
+            );
+
+
+        if (disposition) {
+
+            const utfMatch =
+                disposition.match(
+                    /filename\*=UTF-8''([^;]+)/i
+                );
+
+
+            const normalMatch =
+                disposition.match(
+                    /filename="?([^";]+)"?/i
+                );
+
+
+            if (
+                utfMatch
+                && utfMatch[1]
+            ) {
+
+                filename =
+                    decodeURIComponent(
+                        utfMatch[1]
+                    );
+
+            } else if (
+                normalMatch
+                && normalMatch[1]
+            ) {
+
+                filename =
+                    normalMatch[1];
+
+            }
+
+        }
+
+
+        const downloadUrl =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        const link =
+            document.createElement(
+                "a"
+            );
+
+
+        link.href =
+            downloadUrl;
+
+
+        link.download =
+            filename;
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        link.remove();
+
+
+        setTimeout(
+            () => {
+                URL.revokeObjectURL(
+                    downloadUrl
+                );
+            },
+            1000
+        );
+
+
+        setAppMessage(
+            format.toUpperCase()
+            + " downloaded successfully.",
+            true
+        );
+
+
+    } catch (error) {
+
+        setAppMessage(
+            error.message
+        );
+
+
+    } finally {
+
+        txtButton.disabled = false;
+        pdfButton.disabled = false;
+
+    }
 
 }
 
