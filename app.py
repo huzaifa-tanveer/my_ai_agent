@@ -26,6 +26,7 @@ from fastapi import (
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+
 from pydantic import BaseModel
 
 from openai import OpenAI
@@ -71,15 +72,24 @@ SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER or "")
+SMTP_FROM = os.getenv(
+    "SMTP_FROM",
+    SMTP_USER or "",
+)
 
 SMTP_USE_TLS = (
-    os.getenv("SMTP_USE_TLS", "true").lower()
+    os.getenv(
+        "SMTP_USE_TLS",
+        "true",
+    ).lower()
     == "true"
 )
 
 SMTP_USE_SSL = (
-    os.getenv("SMTP_USE_SSL", "false").lower()
+    os.getenv(
+        "SMTP_USE_SSL",
+        "false",
+    ).lower()
     == "true"
 )
 
@@ -89,12 +99,17 @@ if not OPENROUTER_API_KEY:
         "OPENROUTER_API_KEY missing"
     )
 
+
 if not DATABASE_URL:
     raise RuntimeError(
         "DATABASE_URL missing"
     )
 
-if DATABASE_URL.startswith("postgres://"):
+
+if DATABASE_URL.startswith(
+    "postgres://"
+):
+
     DATABASE_URL = DATABASE_URL.replace(
         "postgres://",
         "postgresql://",
@@ -109,6 +124,7 @@ if DATABASE_URL.startswith("postgres://"):
 app = FastAPI(
     title="My AI Agent"
 )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -138,11 +154,13 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
+
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
 )
+
 
 Base = declarative_base()
 
@@ -163,6 +181,12 @@ class User(Base):
     email = Column(
         String(255),
         nullable=True,
+    )
+
+    email_verified = Column(
+        Boolean,
+        default=False,
+        nullable=False,
     )
 
     password_hash = Column(
@@ -358,13 +382,60 @@ class PasswordResetCode(Base):
     )
 
 
+class EmailVerificationCode(Base):
+
+    __tablename__ = "email_verification_codes"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    username = Column(
+        String(100),
+        ForeignKey(
+            "users.username",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    code_hash = Column(
+        String(64),
+        nullable=False,
+    )
+
+    expires_at = Column(
+        DateTime,
+        nullable=False,
+    )
+
+    used = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+
+# =========================================================
+# CREATE TABLES
+# =========================================================
+
 Base.metadata.create_all(
     bind=engine
 )
 
 
 # =========================================================
-# DATABASE MIGRATION
+# SAFE DATABASE MIGRATION
 # =========================================================
 
 with engine.begin() as connection:
@@ -373,7 +444,19 @@ with engine.begin() as connection:
         text(
             """
             ALTER TABLE users
-            ADD COLUMN IF NOT EXISTS email VARCHAR(255)
+            ADD COLUMN IF NOT EXISTS
+            email VARCHAR(255)
+            """
+        )
+    )
+
+    connection.execute(
+        text(
+            """
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS
+            email_verified BOOLEAN
+            NOT NULL DEFAULT TRUE
             """
         )
     )
@@ -399,6 +482,7 @@ UPLOAD_DIR = os.getenv(
     "uploads",
 )
 
+
 os.makedirs(
     UPLOAD_DIR,
     exist_ok=True,
@@ -409,7 +493,9 @@ os.makedirs(
 # EMAIL HELPERS
 # =========================================================
 
-def normalize_email(email: str):
+def normalize_email(
+    email: str,
+):
 
     return (
         email
@@ -418,7 +504,9 @@ def normalize_email(email: str):
     )
 
 
-def valid_email(email: str):
+def valid_email(
+    email: str,
+):
 
     pattern = (
         r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
@@ -446,9 +534,24 @@ def hash_reset_code(
     ).hexdigest()
 
 
-def send_reset_email(
+def hash_verification_code(
     email,
     code,
+):
+
+    value = (
+        f"verify:{email}:{code}:{JWT_SECRET}"
+    )
+
+    return hashlib.sha256(
+        value.encode()
+    ).hexdigest()
+
+
+def send_email_message(
+    email,
+    subject,
+    body,
 ):
 
     if not all([
@@ -464,28 +567,12 @@ def send_reset_email(
 
     message = EmailMessage()
 
-    message["Subject"] = (
-        "My AI Agent - Password Reset Code"
-    )
-
+    message["Subject"] = subject
     message["From"] = SMTP_FROM
     message["To"] = email
 
     message.set_content(
-        f"""
-Hello,
-
-Your password reset code is:
-
-{code}
-
-This code will expire in 10 minutes.
-
-If you did not request a password reset,
-you can ignore this email.
-
-My AI Agent
-"""
+        body
     )
 
     if SMTP_USE_SSL:
@@ -528,6 +615,70 @@ My AI Agent
             smtp.send_message(
                 message
             )
+
+
+def send_reset_email(
+    email,
+    code,
+):
+
+    subject = (
+        "My AI Agent - Password Reset Code"
+    )
+
+    body = f"""
+Hello,
+
+Your password reset code is:
+
+{code}
+
+This code will expire in 10 minutes.
+
+If you did not request a password reset,
+you can ignore this email.
+
+My AI Agent
+"""
+
+    send_email_message(
+        email,
+        subject,
+        body,
+    )
+
+
+def send_verification_email(
+    email,
+    code,
+):
+
+    subject = (
+        "My AI Agent - Verify Your Email"
+    )
+
+    body = f"""
+Hello,
+
+Welcome to My AI Agent.
+
+Your email verification code is:
+
+{code}
+
+This code will expire in 10 minutes.
+
+If you did not create this account,
+you can ignore this email.
+
+My AI Agent
+"""
+
+    send_email_message(
+        email,
+        subject,
+        body,
+    )
 
 
 # =========================================================
@@ -597,7 +748,9 @@ def get_current_user(
 
         raise HTTPException(
             status_code=401,
-            detail="Invalid or expired token",
+            detail=(
+                "Invalid or expired token"
+            ),
         )
 
 
@@ -628,6 +781,17 @@ class ResetPasswordRequest(BaseModel):
     email: str
     code: str
     new_password: str
+
+
+class VerifyEmailRequest(BaseModel):
+
+    email: str
+    code: str
+
+
+class ResendVerificationRequest(BaseModel):
+
+    email: str
 
 
 class CreateChatRequest(BaseModel):
@@ -685,6 +849,20 @@ def register(
             ),
         )
 
+    if not all([
+        SMTP_HOST,
+        SMTP_USER,
+        SMTP_PASSWORD,
+        SMTP_FROM,
+    ]):
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Email service is not configured."
+            ),
+        )
+
     db = SessionLocal()
 
     try:
@@ -702,7 +880,9 @@ def register(
 
             raise HTTPException(
                 status_code=400,
-                detail="Username already exists",
+                detail=(
+                    "Username already exists"
+                ),
             )
 
         existing_email = (
@@ -718,7 +898,9 @@ def register(
 
             raise HTTPException(
                 status_code=400,
-                detail="Email already registered",
+                detail=(
+                    "Email already registered"
+                ),
             )
 
         hashed_password = (
@@ -733,23 +915,420 @@ def register(
             username=username,
             email=email,
             password_hash=hashed_password,
+            email_verified=False,
         )
 
         db.add(
             user
         )
 
+        db.flush()
+
+        code = str(
+            secrets.randbelow(
+                900000
+            )
+            + 100000
+        )
+
+        verification = (
+            EmailVerificationCode(
+                username=username,
+                code_hash=(
+                    hash_verification_code(
+                        email,
+                        code,
+                    )
+                ),
+                expires_at=(
+                    datetime.utcnow()
+                    + timedelta(
+                        minutes=10
+                    )
+                ),
+                used=False,
+            )
+        )
+
+        db.add(
+            verification
+        )
+
+        try:
+
+            send_verification_email(
+                email,
+                code,
+            )
+
+        except Exception as email_error:
+
+            db.rollback()
+
+            print(
+                "VERIFICATION EMAIL ERROR:",
+                str(email_error),
+            )
+
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Could not send "
+                    "verification email."
+                ),
+            )
+
         db.commit()
 
         return {
 
+            "message":
+                (
+                    "Account created. "
+                    "Please verify your email."
+                ),
+
+            "email":
+                email,
+
+            "verification_required":
+                True,
+
+        }
+
+    finally:
+
+        db.close()
+
+
+# =========================================================
+# VERIFY EMAIL
+# =========================================================
+
+@app.post("/verify-email")
+def verify_email(
+    data: VerifyEmailRequest,
+):
+
+    email = normalize_email(
+        data.email
+    )
+
+    code = (
+        data.code
+        .strip()
+    )
+
+    if not valid_email(
+        email
+    ):
+
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid email address",
+        )
+
+    if (
+        len(code) != 6
+        or not code.isdigit()
+    ):
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid verification code"
+            ),
+        )
+
+    db = SessionLocal()
+
+    try:
+
+        user = (
+            db.query(User)
+            .filter(
+                User.email
+                == email
+            )
+            .first()
+        )
+
+        if not user:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Invalid or expired "
+                    "verification code"
+                ),
+            )
+
+        if user.email_verified:
+
+            return {
+
+                "message":
+                    "Email already verified.",
+
+                "token":
+                    create_token(
+                        user.username
+                    ),
+
+                "username":
+                    user.username,
+
+            }
+
+        verification = (
+            db.query(
+                EmailVerificationCode
+            )
+            .filter(
+                EmailVerificationCode.username
+                == user.username,
+
+                EmailVerificationCode.used
+                == False,
+            )
+            .order_by(
+                EmailVerificationCode
+                .created_at
+                .desc()
+            )
+            .first()
+        )
+
+        if not verification:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Invalid or expired "
+                    "verification code"
+                ),
+            )
+
+        if (
+            verification.expires_at
+            < datetime.utcnow()
+        ):
+
+            verification.used = True
+
+            db.commit()
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Verification code "
+                    "has expired"
+                ),
+            )
+
+        expected_hash = (
+            hash_verification_code(
+                email,
+                code,
+            )
+        )
+
+        if not hmac.compare_digest(
+            verification.code_hash,
+            expected_hash,
+        ):
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Invalid or expired "
+                    "verification code"
+                ),
+            )
+
+        user.email_verified = True
+
+        verification.used = True
+
+        db.commit()
+
+        return {
+
+            "message":
+                (
+                    "Email verified "
+                    "successfully."
+                ),
+
             "token":
                 create_token(
-                    username
+                    user.username
                 ),
 
             "username":
-                username,
+                user.username,
+
+        }
+
+    finally:
+
+        db.close()
+
+
+# =========================================================
+# RESEND VERIFICATION CODE
+# =========================================================
+
+@app.post(
+    "/resend-verification-code"
+)
+def resend_verification_code(
+    data: ResendVerificationRequest,
+):
+
+    email = normalize_email(
+        data.email
+    )
+
+    if not valid_email(
+        email
+    ):
+
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid email address",
+        )
+
+    if not all([
+        SMTP_HOST,
+        SMTP_USER,
+        SMTP_PASSWORD,
+        SMTP_FROM,
+    ]):
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Email service is not configured."
+            ),
+        )
+
+    db = SessionLocal()
+
+    try:
+
+        user = (
+            db.query(User)
+            .filter(
+                User.email
+                == email
+            )
+            .first()
+        )
+
+        if not user:
+
+            return {
+
+                "message":
+                    (
+                        "If the account exists, "
+                        "a verification code "
+                        "has been sent."
+                    )
+
+            }
+
+        if user.email_verified:
+
+            return {
+
+                "message":
+                    "Email is already verified."
+
+            }
+
+        old_codes = (
+            db.query(
+                EmailVerificationCode
+            )
+            .filter(
+                EmailVerificationCode.username
+                == user.username,
+
+                EmailVerificationCode.used
+                == False,
+            )
+            .all()
+        )
+
+        for item in old_codes:
+
+            item.used = True
+
+        code = str(
+            secrets.randbelow(
+                900000
+            )
+            + 100000
+        )
+
+        verification = (
+            EmailVerificationCode(
+                username=user.username,
+                code_hash=(
+                    hash_verification_code(
+                        email,
+                        code,
+                    )
+                ),
+                expires_at=(
+                    datetime.utcnow()
+                    + timedelta(
+                        minutes=10
+                    )
+                ),
+                used=False,
+            )
+        )
+
+        db.add(
+            verification
+        )
+
+        try:
+
+            send_verification_email(
+                email,
+                code,
+            )
+
+        except Exception as email_error:
+
+            db.rollback()
+
+            print(
+                "RESEND VERIFICATION ERROR:",
+                str(email_error),
+            )
+
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Could not send "
+                    "verification email."
+                ),
+            )
+
+        db.commit()
+
+        return {
+
+            "message":
+                (
+                    "Verification code "
+                    "sent successfully."
+                )
 
         }
 
@@ -791,7 +1370,8 @@ def login(
             raise HTTPException(
                 status_code=401,
                 detail=(
-                    "Invalid username or password"
+                    "Invalid username "
+                    "or password"
                 ),
             )
 
@@ -805,7 +1385,18 @@ def login(
             raise HTTPException(
                 status_code=401,
                 detail=(
-                    "Invalid username or password"
+                    "Invalid username "
+                    "or password"
+                ),
+            )
+
+        if not user.email_verified:
+
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Please verify your "
+                    "email first."
                 ),
             )
 
@@ -839,7 +1430,9 @@ def forgot_password(
         data.email
     )
 
-    if not valid_email(email):
+    if not valid_email(
+        email
+    ):
 
         raise HTTPException(
             status_code=400,
@@ -876,10 +1469,14 @@ def forgot_password(
         if not user:
 
             return {
-                "message": (
-                    "If this email is registered, "
-                    "a reset code has been sent."
-                )
+
+                "message":
+                    (
+                        "If this email is "
+                        "registered, a reset "
+                        "code has been sent."
+                    )
+
             }
 
         old_codes = (
@@ -889,15 +1486,16 @@ def forgot_password(
             .filter(
                 PasswordResetCode.username
                 == user.username,
+
                 PasswordResetCode.used
                 == False,
             )
             .all()
         )
 
-        for item in old_codes:
+        for old_code in old_codes:
 
-            item.used = True
+            old_code.used = True
 
         code = str(
             secrets.randbelow(
@@ -906,21 +1504,25 @@ def forgot_password(
             + 100000
         )
 
-        code_hash = hash_reset_code(
-            email,
-            code,
+        code_hash = (
+            hash_reset_code(
+                email,
+                code,
+            )
         )
 
-        reset_code = PasswordResetCode(
-            username=user.username,
-            code_hash=code_hash,
-            expires_at=(
-                datetime.utcnow()
-                + timedelta(
-                    minutes=10
-                )
-            ),
-            used=False,
+        reset_code = (
+            PasswordResetCode(
+                username=user.username,
+                code_hash=code_hash,
+                expires_at=(
+                    datetime.utcnow()
+                    + timedelta(
+                        minutes=10
+                    )
+                ),
+                used=False,
+            )
         )
 
         db.add(
@@ -946,17 +1548,22 @@ def forgot_password(
             raise HTTPException(
                 status_code=500,
                 detail=(
-                    "Could not send reset email."
+                    "Could not send "
+                    "reset email."
                 ),
             )
 
         db.commit()
 
         return {
-            "message": (
-                "If this email is registered, "
-                "a reset code has been sent."
-            )
+
+            "message":
+                (
+                    "If this email is "
+                    "registered, a reset "
+                    "code has been sent."
+                )
+
         }
 
     finally:
@@ -982,7 +1589,9 @@ def reset_password(
         .strip()
     )
 
-    if not valid_email(email):
+    if not valid_email(
+        email
+    ):
 
         raise HTTPException(
             status_code=400,
@@ -999,7 +1608,9 @@ def reset_password(
             detail="Invalid reset code",
         )
 
-    if len(data.new_password) < 6:
+    if len(
+        data.new_password
+    ) < 6:
 
         raise HTTPException(
             status_code=400,
@@ -1027,7 +1638,8 @@ def reset_password(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Invalid or expired reset code"
+                    "Invalid or expired "
+                    "reset code"
                 ),
             )
 
@@ -1038,11 +1650,14 @@ def reset_password(
             .filter(
                 PasswordResetCode.username
                 == user.username,
+
                 PasswordResetCode.used
                 == False,
             )
             .order_by(
-                PasswordResetCode.created_at.desc()
+                PasswordResetCode
+                .created_at
+                .desc()
             )
             .first()
         )
@@ -1052,7 +1667,8 @@ def reset_password(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Invalid or expired reset code"
+                    "Invalid or expired "
+                    "reset code"
                 ),
             )
 
@@ -1072,9 +1688,11 @@ def reset_password(
                 ),
             )
 
-        expected_hash = hash_reset_code(
-            email,
-            code,
+        expected_hash = (
+            hash_reset_code(
+                email,
+                code,
+            )
         )
 
         if not hmac.compare_digest(
@@ -1085,7 +1703,8 @@ def reset_password(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Invalid or expired reset code"
+                    "Invalid or expired "
+                    "reset code"
                 ),
             )
 
@@ -1106,10 +1725,14 @@ def reset_password(
         db.commit()
 
         return {
-            "message": (
-                "Password reset successfully. "
-                "You can now login."
-            )
+
+            "message":
+                (
+                    "Password reset "
+                    "successfully. "
+                    "You can now login."
+                )
+
         }
 
     finally:
@@ -1151,7 +1774,9 @@ def web_search(
         )
 
         return [
+
             {
+
                 "title":
                     item.get(
                         "title"
@@ -1166,10 +1791,12 @@ def web_search(
                     item.get(
                         "body"
                     ),
+
             }
 
             for item
             in results
+
         ]
 
     except Exception as e:
@@ -1333,10 +1960,8 @@ def read_csv_file(
 
     try:
 
-        dataframe = (
-            pd.read_csv(
-                file_path
-            )
+        dataframe = pd.read_csv(
+            file_path
         )
 
         return {
@@ -1439,7 +2064,9 @@ def read_pdf_file(
 tools = [
 
     {
-        "type": "function",
+
+        "type":
+            "function",
 
         "function": {
 
@@ -1481,7 +2108,9 @@ tools = [
 
 
     {
-        "type": "function",
+
+        "type":
+            "function",
 
         "function": {
 
@@ -1489,7 +2118,10 @@ tools = [
                 "get_current_datetime",
 
             "description":
-                "Get current date and time.",
+                (
+                    "Get current "
+                    "date and time."
+                ),
 
             "parameters": {
 
@@ -1507,7 +2139,9 @@ tools = [
 
 
     {
-        "type": "function",
+
+        "type":
+            "function",
 
         "function": {
 
@@ -1546,7 +2180,9 @@ tools = [
 
 
     {
-        "type": "function",
+
+        "type":
+            "function",
 
         "function": {
 
@@ -1555,8 +2191,9 @@ tools = [
 
             "description":
                 (
-                    "Save information the user "
-                    "explicitly asks to remember."
+                    "Save information "
+                    "the user explicitly "
+                    "asks to remember."
                 ),
 
             "parameters": {
@@ -1591,7 +2228,9 @@ tools = [
 
 
     {
-        "type": "function",
+
+        "type":
+            "function",
 
         "function": {
 
@@ -1599,7 +2238,10 @@ tools = [
                 "get_user_memory",
 
             "description":
-                "Get saved user information.",
+                (
+                    "Get saved user "
+                    "information."
+                ),
 
             "parameters": {
 
@@ -1627,7 +2269,9 @@ tools = [
 
 
     {
-        "type": "function",
+
+        "type":
+            "function",
 
         "function": {
 
@@ -1663,7 +2307,9 @@ tools = [
 
 
     {
-        "type": "function",
+
+        "type":
+            "function",
 
         "function": {
 
@@ -1699,7 +2345,9 @@ tools = [
 
 
     {
-        "type": "function",
+
+        "type":
+            "function",
 
         "function": {
 
@@ -1735,6 +2383,10 @@ tools = [
 
 ]
 
+
+# =========================================================
+# SYSTEM PROMPT
+# =========================================================
 
 SYSTEM_PROMPT = """
 You are a helpful AI agent.
@@ -1984,7 +2636,8 @@ def delete_chat(
             db.commit()
 
         return {
-            "success": True
+            "success":
+                True
         }
 
     finally:
@@ -2098,7 +2751,7 @@ def execute_tool(
             arguments["b"],
         )
 
-    elif name == (
+    if name == (
         "get_current_datetime"
     ):
 
@@ -2106,13 +2759,13 @@ def execute_tool(
             get_current_datetime()
         )
 
-    elif name == "web_search":
+    if name == "web_search":
 
         return web_search(
             arguments["query"]
         )
 
-    elif name == (
+    if name == (
         "save_user_memory"
     ):
 
@@ -2122,7 +2775,7 @@ def execute_tool(
             arguments["value"],
         )
 
-    elif name == (
+    if name == (
         "get_user_memory"
     ):
 
@@ -2131,7 +2784,7 @@ def execute_tool(
             arguments["key"],
         )
 
-    elif name == (
+    if name == (
         "read_text_file"
     ):
 
@@ -2139,7 +2792,7 @@ def execute_tool(
             arguments["file_path"]
         )
 
-    elif name == (
+    if name == (
         "read_csv_file"
     ):
 
@@ -2147,7 +2800,7 @@ def execute_tool(
             arguments["file_path"]
         )
 
-    elif name == (
+    if name == (
         "read_pdf_file"
     ):
 
@@ -2161,7 +2814,7 @@ def execute_tool(
 
 
 # =========================================================
-# AI RESPONSE
+# AI
 # =========================================================
 
 def generate_ai_answer(
@@ -2205,7 +2858,9 @@ def generate_ai_answer(
                 messages=(
                     model_messages
                     + [
+
                         {
+
                             "role":
                                 "system",
 
@@ -2215,7 +2870,9 @@ def generate_ai_answer(
                                     "latest request directly "
                                     "with useful text."
                                 ),
+
                         }
+
                     ]
                 ),
             )
@@ -2231,7 +2888,8 @@ def generate_ai_answer(
 
             (
                 "I could not generate "
-                "a response. Please try again."
+                "a response. "
+                "Please try again."
             )
         )
 
@@ -2251,12 +2909,10 @@ def generate_ai_answer(
 
         try:
 
-            arguments = (
-                json.loads(
-                    tool_call
-                    .function
-                    .arguments
-                )
+            arguments = json.loads(
+                tool_call
+                .function
+                .arguments
             )
 
         except Exception:
@@ -2316,13 +2972,14 @@ def generate_ai_answer(
 
         (
             "I could not generate "
-            "a response. Please try again."
+            "a response. "
+            "Please try again."
         )
     )
 
 
 # =========================================================
-# CHAT ENDPOINT
+# CHAT
 # =========================================================
 
 @app.post("/chat")
@@ -2443,18 +3100,14 @@ def chat_endpoint(
 
         try:
 
-            answer = (
-                generate_ai_answer(
-                    username,
-                    model_messages,
-                )
+            answer = generate_ai_answer(
+                username,
+                model_messages,
             )
 
         except Exception as e:
 
-            error_text = (
-                str(e)
-            )
+            error_text = str(e)
 
             print(
                 "OPENROUTER ERROR:",
@@ -2463,7 +3116,8 @@ def chat_endpoint(
 
             if (
                 "429" in error_text
-                or "Rate limit"
+                or
+                "Rate limit"
                 in error_text
             ):
 
@@ -2472,7 +3126,10 @@ def chat_endpoint(
                     "Please try again later."
                 )
 
-            elif "401" in error_text:
+            elif (
+                "401"
+                in error_text
+            ):
 
                 answer = (
                     "OpenRouter "
@@ -2505,9 +3162,7 @@ def chat_endpoint(
         if (
             current_chat.title
             == "New Chat"
-
             and
-
             visible_message
         ):
 
@@ -2543,8 +3198,10 @@ def chat_endpoint(
         return {
 
             "answer":
-                "Server error: "
-                + str(e)
+                (
+                    "Server error: "
+                    + str(e)
+                )
 
         }
 
@@ -2554,7 +3211,7 @@ def chat_endpoint(
 
 
 # =========================================================
-# HEALTH CHECK
+# HEALTH
 # =========================================================
 
 @app.get("/health")
