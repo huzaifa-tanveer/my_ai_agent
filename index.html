@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>My AI Agent</title>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -34,7 +35,11 @@
       display: none !important;
     }
 
-    #authScreen {
+    /* =========================
+       AUTH
+    ========================= */
+
+    .auth-screen {
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -45,16 +50,32 @@
     .auth-card {
       width: 100%;
       max-width: 380px;
-      background: white;
+      background: #ffffff;
       border-radius: 18px;
       padding: 30px;
-      box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+    }
+
+    .auth-card h1,
+    .auth-card h2 {
+      text-align: center;
+      margin-bottom: 22px;
     }
 
     .auth-card h1 {
-      text-align: center;
-      margin-bottom: 22px;
       font-size: 26px;
+    }
+
+    .auth-card h2 {
+      font-size: 24px;
+    }
+
+    .auth-card p {
+      text-align: center;
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 18px;
+      line-height: 1.5;
     }
 
     .auth-card input {
@@ -76,29 +97,55 @@
       border: none;
       border-radius: 9px;
       background: #111827;
-      color: white;
+      color: #ffffff;
       margin-bottom: 9px;
     }
 
-    .secondary-btn {
-      background: #374151 !important;
+    .auth-card button.secondary {
+      background: #374151;
     }
 
-    .link-btn {
-      background: transparent !important;
-      color: #2563eb !important;
-      padding: 6px !important;
-      margin-top: 2px;
+    .auth-card button.light {
+      background: #e5e7eb;
+      color: #111827;
     }
 
-    #authMessage,
-    #forgotMessage,
-    #resetMessage {
+    .auth-link {
+      text-align: center;
+      font-size: 14px;
       margin-top: 8px;
+    }
+
+    .auth-link button {
+      width: auto;
+      background: transparent;
+      color: #2563eb;
+      padding: 4px;
+      margin: 0;
+      border: none;
+    }
+
+    .auth-message {
+      margin-top: 8px;
+      color: #ef4444;
       min-height: 20px;
       font-size: 14px;
-      color: #ef4444;
+      text-align: center;
     }
+
+    .email-note {
+      background: #f3f4f6;
+      border-radius: 9px;
+      padding: 10px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      text-align: center;
+      color: #374151;
+    }
+
+    /* =========================
+       APP
+    ========================= */
 
     #appScreen {
       height: 100vh;
@@ -109,7 +156,7 @@
     .sidebar {
       width: 270px;
       background: #111827;
-      color: white;
+      color: #ffffff;
       display: flex;
       flex-direction: column;
       padding: 18px 14px;
@@ -122,10 +169,11 @@
       padding: 4px 8px;
     }
 
-    .new-chat-btn {
+    .new-chat-btn,
+    .logout-btn {
       border: none;
       background: #1f2937;
-      color: white;
+      color: #ffffff;
       border-radius: 10px;
       padding: 11px;
       margin-bottom: 14px;
@@ -165,32 +213,18 @@
       font-size: 18px;
     }
 
-    .delete-chat:hover {
-      color: #f87171;
-    }
-
-    .logout-btn {
-      border: none;
-      background: #374151;
-      color: white;
-      border-radius: 8px;
-      padding: 10px;
-      margin-top: 10px;
-    }
-
     .main {
       flex: 1;
       display: flex;
       flex-direction: column;
       min-width: 0;
-      background: white;
+      background: #ffffff;
     }
 
     .topbar {
       border-bottom: 1px solid #e5e7eb;
       padding: 15px 20px;
       font-weight: 700;
-      background: white;
     }
 
     #messages {
@@ -222,18 +256,17 @@
 
     .user .message {
       background: #111827;
-      color: white;
+      color: #ffffff;
     }
 
     .assistant .message {
       background: #f3f4f6;
-      color: #111827;
     }
 
     .assistant .message pre {
       overflow-x: auto;
       background: #111827;
-      color: white;
+      color: #ffffff;
       padding: 12px;
       border-radius: 8px;
       margin: 10px 0;
@@ -252,15 +285,6 @@
     .composer-wrap {
       padding: 14px 18px 18px;
       border-top: 1px solid #e5e7eb;
-      background: white;
-    }
-
-    #selectedFile {
-      max-width: 900px;
-      margin: 0 auto 8px;
-      font-size: 13px;
-      color: #4b5563;
-      min-height: 18px;
     }
 
     .composer {
@@ -276,7 +300,7 @@
       height: 44px;
       border: 1px solid #d1d5db;
       border-radius: 10px;
-      background: white;
+      background: #ffffff;
     }
 
     #messageInput {
@@ -284,7 +308,6 @@
       border: 1px solid #d1d5db;
       border-radius: 10px;
       padding: 12px 14px;
-      outline: none;
     }
 
     #sendBtn {
@@ -293,29 +316,32 @@
       border: none;
       border-radius: 10px;
       background: #111827;
-      color: white;
+      color: #ffffff;
     }
 
-    #sendBtn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
+    #selectedFile,
     #appMessage {
       max-width: 900px;
-      margin: 6px auto 0;
-      color: #ef4444;
+      margin: 6px auto;
       font-size: 13px;
       min-height: 16px;
     }
 
-    @media (max-width: 760px) {
+    #appMessage {
+      color: #ef4444;
+    }
+
+    @media (max-width: 700px) {
       .sidebar {
-        width: 200px;
+        width: 190px;
       }
 
       .message {
         max-width: 90%;
+      }
+
+      .auth-card {
+        padding: 24px;
       }
     }
   </style>
@@ -323,169 +349,272 @@
 
 <body>
 
-  <!-- =========================
+  <!-- =========================================
        LOGIN
-  ========================== -->
-  <section id="authScreen">
+  ========================================== -->
+
+  <section id="loginScreen" class="auth-screen">
     <div class="auth-card">
 
-      <div id="loginPanel">
-        <h1>My AI Agent</h1>
+      <h1>My AI Agent</h1>
 
-        <input
-          id="loginUsername"
-          type="text"
-          placeholder="Username"
-          autocomplete="username"
-        />
+      <input
+        id="loginUsername"
+        type="text"
+        placeholder="Username"
+        autocomplete="username"
+      />
 
-        <input
-          id="loginPassword"
-          type="password"
-          placeholder="Password"
-          autocomplete="current-password"
-        />
+      <input
+        id="loginPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+      />
 
-        <button onclick="login()">
-          Login
-        </button>
+      <button onclick="login()">
+        Login
+      </button>
 
-        <button
-          class="secondary-btn"
-          onclick="showRegister()"
-        >
-          Create Account
-        </button>
+      <button
+        class="secondary"
+        onclick="showRegister()"
+      >
+        Create Account
+      </button>
 
-        <button
-          class="link-btn"
-          onclick="showForgotPassword()"
-        >
+      <div class="auth-link">
+        <button onclick="showForgotPassword()">
           Forgot Password?
         </button>
-
-        <div id="authMessage"></div>
       </div>
 
-
-      <!-- =========================
-           REGISTER
-      ========================== -->
-      <div id="registerPanel" class="hidden">
-
-        <h1>Create Account</h1>
-
-        <input
-          id="registerUsername"
-          type="text"
-          placeholder="Username"
-        />
-
-        <input
-          id="registerEmail"
-          type="email"
-          placeholder="Email"
-        />
-
-        <input
-          id="registerPassword"
-          type="password"
-          placeholder="Password"
-        />
-
-        <button onclick="register()">
-          Register
-        </button>
-
-        <button
-          class="secondary-btn"
-          onclick="showLogin()"
-        >
-          Back to Login
-        </button>
-
-        <div id="registerMessage"></div>
-
-      </div>
-
-
-      <!-- =========================
-           FORGOT PASSWORD
-      ========================== -->
-      <div id="forgotPanel" class="hidden">
-
-        <h1>Forgot Password</h1>
-
-        <input
-          id="forgotEmail"
-          type="email"
-          placeholder="Enter your registered email"
-        />
-
-        <button onclick="sendResetCode()">
-          Send Reset Code
-        </button>
-
-        <button
-          class="secondary-btn"
-          onclick="showLogin()"
-        >
-          Back to Login
-        </button>
-
-        <div id="forgotMessage"></div>
-
-      </div>
-
-
-      <!-- =========================
-           RESET PASSWORD
-      ========================== -->
-      <div id="resetPanel" class="hidden">
-
-        <h1>Reset Password</h1>
-
-        <input
-          id="resetEmail"
-          type="email"
-          placeholder="Email"
-        />
-
-        <input
-          id="resetCode"
-          type="text"
-          maxlength="6"
-          placeholder="6-digit code"
-        />
-
-        <input
-          id="newPassword"
-          type="password"
-          placeholder="New password"
-        />
-
-        <button onclick="resetPassword()">
-          Reset Password
-        </button>
-
-        <button
-          class="secondary-btn"
-          onclick="showLogin()"
-        >
-          Back to Login
-        </button>
-
-        <div id="resetMessage"></div>
-
-      </div>
+      <div
+        id="loginMessage"
+        class="auth-message"
+      ></div>
 
     </div>
   </section>
 
 
-  <!-- =========================
+  <!-- =========================================
+       REGISTER
+  ========================================== -->
+
+  <section
+    id="registerScreen"
+    class="auth-screen hidden"
+  >
+
+    <div class="auth-card">
+
+      <h2>Create Account</h2>
+
+      <input
+        id="registerUsername"
+        type="text"
+        placeholder="Username"
+        autocomplete="username"
+      />
+
+      <input
+        id="registerEmail"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+      />
+
+      <input
+        id="registerPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="new-password"
+      />
+
+      <button onclick="register()">
+        Create Account
+      </button>
+
+      <button
+        class="secondary"
+        onclick="showLogin()"
+      >
+        Back to Login
+      </button>
+
+      <div
+        id="registerMessage"
+        class="auth-message"
+      ></div>
+
+    </div>
+  </section>
+
+
+  <!-- =========================================
+       EMAIL VERIFICATION
+  ========================================== -->
+
+  <section
+    id="verifyScreen"
+    class="auth-screen hidden"
+  >
+
+    <div class="auth-card">
+
+      <h2>Verify Email</h2>
+
+      <p>
+        We sent a 6-digit verification code
+        to your email address.
+      </p>
+
+      <div
+        id="verificationEmailDisplay"
+        class="email-note"
+      ></div>
+
+      <input
+        id="verificationEmail"
+        type="email"
+        placeholder="Email"
+      />
+
+      <input
+        id="verificationCode"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="6-digit verification code"
+      />
+
+      <button onclick="verifyEmail()">
+        Verify Email
+      </button>
+
+      <button
+        class="secondary"
+        onclick="resendVerificationCode()"
+      >
+        Resend Code
+      </button>
+
+      <button
+        class="light"
+        onclick="showLogin()"
+      >
+        Back to Login
+      </button>
+
+      <div
+        id="verifyMessage"
+        class="auth-message"
+      ></div>
+
+    </div>
+  </section>
+
+
+  <!-- =========================================
+       FORGOT PASSWORD
+  ========================================== -->
+
+  <section
+    id="forgotScreen"
+    class="auth-screen hidden"
+  >
+
+    <div class="auth-card">
+
+      <h2>Forgot Password</h2>
+
+      <input
+        id="forgotEmail"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+      />
+
+      <button onclick="sendResetCode()">
+        Send Reset Code
+      </button>
+
+      <button
+        class="secondary"
+        onclick="showLogin()"
+      >
+        Back to Login
+      </button>
+
+      <div
+        id="forgotMessage"
+        class="auth-message"
+      ></div>
+
+    </div>
+  </section>
+
+
+  <!-- =========================================
+       RESET PASSWORD
+  ========================================== -->
+
+  <section
+    id="resetScreen"
+    class="auth-screen hidden"
+  >
+
+    <div class="auth-card">
+
+      <h2>Reset Password</h2>
+
+      <input
+        id="resetEmail"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+      />
+
+      <input
+        id="resetCode"
+        type="text"
+        maxlength="6"
+        inputmode="numeric"
+        placeholder="6-digit reset code"
+      />
+
+      <input
+        id="newPassword"
+        type="password"
+        placeholder="New Password"
+        autocomplete="new-password"
+      />
+
+      <button onclick="resetPassword()">
+        Reset Password
+      </button>
+
+      <button
+        class="secondary"
+        onclick="showLogin()"
+      >
+        Back to Login
+      </button>
+
+      <div
+        id="resetMessage"
+        class="auth-message"
+      ></div>
+
+    </div>
+  </section>
+
+
+  <!-- =========================================
        MAIN APP
-  ========================== -->
+  ========================================== -->
+
   <section
     id="appScreen"
     class="hidden"
@@ -532,6 +661,7 @@
         </div>
 
       </div>
+
 
       <div class="composer-wrap">
 
@@ -587,1592 +717,2034 @@
 
 <script>
 
-const API_URL =
-  window.location.origin;
+  /* =========================================
+     API
+  ========================================== */
+
+  const API_URL = window.location.origin;
 
 
-let token =
-  localStorage.getItem("token") || "";
+  let token =
+    localStorage.getItem("token") || "";
 
-let currentUsername =
-  localStorage.getItem("username") || "";
+  let currentUsername =
+    localStorage.getItem("username") || "";
 
-let currentChatId = null;
+  let currentChatId = null;
 
-let uploadedFilePath = null;
+  let uploadedFilePath = null;
 
-
-/* =====================================================
-   PANEL HELPERS
-===================================================== */
-
-function hideAuthPanels() {
-
-  document
-    .getElementById("loginPanel")
-    .classList.add("hidden");
-
-  document
-    .getElementById("registerPanel")
-    .classList.add("hidden");
-
-  document
-    .getElementById("forgotPanel")
-    .classList.add("hidden");
-
-  document
-    .getElementById("resetPanel")
-    .classList.add("hidden");
-}
+  let pendingVerificationEmail =
+    localStorage.getItem("pendingVerificationEmail") || "";
 
 
-function showLogin() {
+  /* =========================================
+     SCREEN HELPERS
+  ========================================== */
 
-  hideAuthPanels();
-
-  document
-    .getElementById("loginPanel")
-    .classList.remove("hidden");
-}
-
-
-function showRegister() {
-
-  hideAuthPanels();
-
-  document
-    .getElementById("registerPanel")
-    .classList.remove("hidden");
-}
+  const authScreens = [
+    "loginScreen",
+    "registerScreen",
+    "verifyScreen",
+    "forgotScreen",
+    "resetScreen"
+  ];
 
 
-function showForgotPassword() {
+  function hideAllAuthScreens() {
 
-  hideAuthPanels();
+    authScreens.forEach(id => {
 
-  document
-    .getElementById("forgotPanel")
-    .classList.remove("hidden");
-}
+      document
+        .getElementById(id)
+        .classList
+        .add("hidden");
 
-
-function showResetPassword(email = "") {
-
-  hideAuthPanels();
-
-  document
-    .getElementById("resetPanel")
-    .classList.remove("hidden");
-
-  document
-    .getElementById("resetEmail")
-    .value = email;
-}
-
-
-/* =====================================================
-   MESSAGE HELPERS
-===================================================== */
-
-function setMessage(
-  elementId,
-  message,
-  success = false
-) {
-
-  const element =
-    document.getElementById(
-      elementId
-    );
-
-  element.textContent =
-    message || "";
-
-  element.style.color =
-    success
-      ? "#16a34a"
-      : "#ef4444";
-}
-
-
-async function parseResponse(
-  response
-) {
-
-  let data = {};
-
-  try {
-
-    data =
-      await response.json();
-
-  } catch (error) {
-
-    data = {};
+    });
 
   }
 
 
-  if (!response.ok) {
+  function hideApp() {
 
-    throw new Error(
-      data.detail ||
-      data.message ||
-      `Request failed (${response.status})`
-    );
-
-  }
-
-  return data;
-}
-
-
-async function request(
-  url,
-  options = {}
-) {
-
-  options.headers =
-    options.headers || {};
-
-
-  if (token) {
-
-    options.headers[
-      "Authorization"
-    ] =
-      "Bearer " + token;
-
-  }
-
-
-  const response =
-    await fetch(
-      API_URL + url,
-      options
-    );
-
-
-  if (
-    response.status === 401
-  ) {
-
-    logout(false);
-
-    throw new Error(
-      "Session expired. Please login again."
-    );
-
-  }
-
-
-  return response;
-}
-
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
-async function login() {
-
-  const username =
     document
-      .getElementById(
-        "loginUsername"
-      )
-      .value
-      .trim();
+      .getElementById("appScreen")
+      .classList
+      .add("hidden");
+
+  }
 
 
-  const password =
+  function showLogin() {
+
+    hideAllAuthScreens();
+
+    hideApp();
+
     document
-      .getElementById(
-        "loginPassword"
-      )
-      .value;
+      .getElementById("loginScreen")
+      .classList
+      .remove("hidden");
 
-
-  if (!username || !password) {
-
-    setMessage(
-      "authMessage",
-      "Please enter username and password."
-    );
-
-    return;
-  }
-
-
-  setMessage(
-    "authMessage",
-    "Please wait...",
-    true
-  );
-
-
-  try {
-
-    const response =
-      await fetch(
-        API_URL + "/login",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              username,
-              password
-            })
-        }
-      );
-
-
-    const data =
-      await parseResponse(
-        response
-      );
-
-
-    token =
-      data.token;
-
-
-    currentUsername =
-      data.username;
-
-
-    localStorage.setItem(
-      "token",
-      token
-    );
-
-
-    localStorage.setItem(
-      "username",
-      currentUsername
-    );
-
-
-    setMessage(
-      "authMessage",
-      ""
-    );
-
-
-    await showApp();
-
-
-  } catch (error) {
-
-    setMessage(
-      "authMessage",
-      error.message
-    );
+    clearMessages();
 
   }
 
-}
 
+  function showRegister() {
 
-/* =====================================================
-   REGISTER
-===================================================== */
+    hideAllAuthScreens();
 
-async function register() {
+    hideApp();
 
-  const username =
     document
-      .getElementById(
-        "registerUsername"
-      )
-      .value
-      .trim();
+      .getElementById("registerScreen")
+      .classList
+      .remove("hidden");
+
+    clearMessages();
+
+  }
 
 
-  const email =
+  function showForgotPassword() {
+
+    hideAllAuthScreens();
+
+    hideApp();
+
     document
-      .getElementById(
-        "registerEmail"
-      )
-      .value
-      .trim();
+      .getElementById("forgotScreen")
+      .classList
+      .remove("hidden");
+
+    clearMessages();
+
+  }
 
 
-  const password =
+  function showResetPassword(email = "") {
+
+    hideAllAuthScreens();
+
+    hideApp();
+
     document
-      .getElementById(
-        "registerPassword"
-      )
-      .value;
-
-
-  if (
-    !username ||
-    !email ||
-    !password
-  ) {
-
-    setMessage(
-      "registerMessage",
-      "Please fill all fields."
-    );
-
-    return;
-  }
-
-
-  setMessage(
-    "registerMessage",
-    "Creating account...",
-    true
-  );
-
-
-  try {
-
-    const response =
-      await fetch(
-        API_URL + "/register",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              username,
-              email,
-              password
-            })
-        }
-      );
-
-
-    const data =
-      await parseResponse(
-        response
-      );
-
-
-    token =
-      data.token;
-
-
-    currentUsername =
-      data.username;
-
-
-    localStorage.setItem(
-      "token",
-      token
-    );
-
-
-    localStorage.setItem(
-      "username",
-      currentUsername
-    );
-
-
-    await showApp();
-
-
-  } catch (error) {
-
-    setMessage(
-      "registerMessage",
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   FORGOT PASSWORD
-===================================================== */
-
-async function sendResetCode() {
-
-  const email =
-    document
-      .getElementById(
-        "forgotEmail"
-      )
-      .value
-      .trim();
-
-
-  if (!email) {
-
-    setMessage(
-      "forgotMessage",
-      "Please enter your email."
-    );
-
-    return;
-  }
-
-
-  setMessage(
-    "forgotMessage",
-    "Sending reset code...",
-    true
-  );
-
-
-  try {
-
-    const response =
-      await fetch(
-        API_URL + "/forgot-password",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              email
-            })
-        }
-      );
-
-
-    const data =
-      await parseResponse(
-        response
-      );
-
-
-    setMessage(
-      "forgotMessage",
-      data.message,
-      true
-    );
-
-
-    setTimeout(
-      function() {
-
-        showResetPassword(
-          email
-        );
-
-      },
-      1000
-    );
-
-
-  } catch (error) {
-
-    setMessage(
-      "forgotMessage",
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   RESET PASSWORD
-===================================================== */
-
-async function resetPassword() {
-
-  const email =
-    document
-      .getElementById(
-        "resetEmail"
-      )
-      .value
-      .trim();
-
-
-  const code =
-    document
-      .getElementById(
-        "resetCode"
-      )
-      .value
-      .trim();
-
-
-  const newPassword =
-    document
-      .getElementById(
-        "newPassword"
-      )
-      .value;
-
-
-  if (
-    !email ||
-    !code ||
-    !newPassword
-  ) {
-
-    setMessage(
-      "resetMessage",
-      "Please fill all fields."
-    );
-
-    return;
-  }
-
-
-  setMessage(
-    "resetMessage",
-    "Resetting password...",
-    true
-  );
-
-
-  try {
-
-    const response =
-      await fetch(
-        API_URL + "/reset-password",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              email,
-              code,
-              new_password:
-                newPassword
-            })
-        }
-      );
-
-
-    const data =
-      await parseResponse(
-        response
-      );
-
-
-    setMessage(
-      "resetMessage",
-      data.message,
-      true
-    );
-
-
-    setTimeout(
-      function() {
-
-        showLogin();
-
-      },
-      1500
-    );
-
-
-  } catch (error) {
-
-    setMessage(
-      "resetMessage",
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   LOGOUT
-===================================================== */
-
-function logout(
-  showMessage = true
-) {
-
-  token = "";
-
-  currentUsername = "";
-
-  currentChatId = null;
-
-  uploadedFilePath = null;
-
-
-  localStorage.removeItem(
-    "token"
-  );
-
-
-  localStorage.removeItem(
-    "username"
-  );
-
-
-  document
-    .getElementById(
-      "appScreen"
-    )
-    .classList
-    .add(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "authScreen"
-    )
-    .classList
-    .remove(
-      "hidden"
-    );
-
-
-  showLogin();
-
-
-  if (showMessage) {
-
-    setMessage(
-      "authMessage",
-      "Logged out.",
-      true
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   SHOW APP
-===================================================== */
-
-async function showApp() {
-
-  document
-    .getElementById(
-      "authScreen"
-    )
-    .classList
-    .add(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "appScreen"
-    )
-    .classList
-    .remove(
-      "hidden"
-    );
-
-
-  try {
-
-    await loadChats();
-
-
-    if (!currentChatId) {
-
-      await createNewChat();
+      .getElementById("resetScreen")
+      .classList
+      .remove("hidden");
+
+    if (email) {
+
+      document
+        .getElementById("resetEmail")
+        .value = email;
 
     }
 
-
-  } catch (error) {
-
-    setMessage(
-      "appMessage",
-      error.message
-    );
+    clearMessages();
 
   }
 
-}
+
+  function showVerificationScreen(email = "") {
+
+    hideAllAuthScreens();
+
+    hideApp();
+
+    document
+      .getElementById("verifyScreen")
+      .classList
+      .remove("hidden");
+
+    if (email) {
+
+      pendingVerificationEmail = email;
+
+      localStorage.setItem(
+        "pendingVerificationEmail",
+        email
+      );
+
+    }
+
+    const finalEmail =
+      email || pendingVerificationEmail;
+
+    document
+      .getElementById("verificationEmail")
+      .value = finalEmail;
+
+    document
+      .getElementById("verificationEmailDisplay")
+      .textContent = finalEmail
+      ? "Verification email: " + finalEmail
+      : "";
+
+    clearMessages();
+
+  }
 
 
-/* =====================================================
-   CHATS
-===================================================== */
+  /* =========================================
+     MESSAGE HELPERS
+  ========================================== */
 
-async function loadChats() {
+  function clearMessages() {
 
-  const response =
-    await request(
-      "/chats"
-    );
+    const ids = [
+      "loginMessage",
+      "registerMessage",
+      "verifyMessage",
+      "forgotMessage",
+      "resetMessage"
+    ];
 
+    ids.forEach(id => {
 
-  const data =
-    await parseResponse(
-      response
-    );
+      const el =
+        document.getElementById(id);
 
-
-  const list =
-    document.getElementById(
-      "chatList"
-    );
-
-
-  list.innerHTML = "";
-
-
-  const chats =
-    data.chats || [];
-
-
-  chats.forEach(
-    function(chat) {
-
-      const item =
-        document.createElement(
-          "div"
-        );
-
-
-      item.className =
-        "chat-item";
-
-
-      if (
-        chat.chat_id ===
-        currentChatId
-      ) {
-
-        item.classList.add(
-          "active"
-        );
-
+      if (el) {
+        el.textContent = "";
       }
 
+    });
 
-      const title =
-        document.createElement(
-          "div"
-        );
+  }
 
 
-      title.className =
-        "chat-title";
+  function setMessage(
+    elementId,
+    message,
+    success = false
+  ) {
 
-
-      title.textContent =
-        chat.title ||
-        "New Chat";
-
-
-      title.onclick =
-        function() {
-
-          openChat(
-            chat.chat_id
-          );
-
-        };
-
-
-      const deleteButton =
-        document.createElement(
-          "button"
-        );
-
-
-      deleteButton.className =
-        "delete-chat";
-
-
-      deleteButton.textContent =
-        "×";
-
-
-      deleteButton.onclick =
-        async function(event) {
-
-          event.stopPropagation();
-
-          await deleteChat(
-            chat.chat_id
-          );
-
-        };
-
-
-      item.appendChild(
-        title
+    const el =
+      document.getElementById(
+        elementId
       );
 
+    if (!el) {
+      return;
+    }
 
-      item.appendChild(
-        deleteButton
+    el.textContent =
+      message || "";
+
+    el.style.color =
+      success
+        ? "#16a34a"
+        : "#ef4444";
+
+  }
+
+
+  function setAppMessage(
+    message,
+    success = false
+  ) {
+
+    const el =
+      document.getElementById(
+        "appMessage"
       );
 
+    el.textContent =
+      message || "";
 
-      list.appendChild(
-        item
+    el.style.color =
+      success
+        ? "#16a34a"
+        : "#ef4444";
+
+  }
+
+
+  /* =========================================
+     RESPONSE
+  ========================================== */
+
+  async function parseResponse(
+    response
+  ) {
+
+    let data = {};
+
+    try {
+
+      data =
+        await response.json();
+
+    } catch (error) {
+
+      data = {};
+
+    }
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.detail
+        || data.message
+        || `Request failed (${response.status})`
       );
 
     }
-  );
 
-}
-
-
-/* =====================================================
-   CREATE CHAT
-===================================================== */
-
-async function createNewChat() {
-
-  try {
-
-    const response =
-      await request(
-        "/chats",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              title:
-                "New Chat"
-            })
-        }
-      );
-
-
-    const data =
-      await parseResponse(
-        response
-      );
-
-
-    currentChatId =
-      data.chat_id;
-
-
-    uploadedFilePath =
-      null;
-
-
-    document
-      .getElementById(
-        "selectedFile"
-      )
-      .textContent =
-      "";
-
-
-    document
-      .getElementById(
-        "currentChatTitle"
-      )
-      .textContent =
-      data.title ||
-      "New Chat";
-
-
-    renderMessages([]);
-
-
-    await loadChats();
-
-
-  } catch (error) {
-
-    setMessage(
-      "appMessage",
-      error.message
-    );
-
+    return data;
   }
 
-}
 
+  async function request(
+    url,
+    options = {}
+  ) {
 
-/* =====================================================
-   OPEN CHAT
-===================================================== */
+    options.headers =
+      options.headers || {};
 
-async function openChat(
-  chatId
-) {
+    if (token) {
 
-  try {
+      options.headers[
+        "Authorization"
+      ] = "Bearer " + token;
 
-    currentChatId =
-      chatId;
-
-
-    uploadedFilePath =
-      null;
-
+    }
 
     const response =
-      await request(
+      await fetch(
+        API_URL + url,
+        options
+      );
 
-        "/chats/" +
+    if (
+      response.status === 401
+      && token
+    ) {
 
-        encodeURIComponent(
-          chatId
+      logout(false);
+
+      throw new Error(
+        "Session expired. Please login again."
+      );
+
+    }
+
+    return response;
+  }
+
+
+  /* =========================================
+     LOGIN
+  ========================================== */
+
+  async function login() {
+
+    const username =
+      document
+        .getElementById(
+          "loginUsername"
         )
+        .value
+        .trim();
 
-      );
-
-
-    const data =
-      await parseResponse(
-        response
-      );
-
-
-    document
-      .getElementById(
-        "currentChatTitle"
-      )
-      .textContent =
-      data.title ||
-      "New Chat";
-
-
-    renderMessages(
-      data.messages || []
-    );
-
-
-    await loadChats();
-
-
-  } catch (error) {
-
-    setMessage(
-      "appMessage",
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   DELETE CHAT
-===================================================== */
-
-async function deleteChat(
-  chatId
-) {
-
-  try {
-
-    const response =
-      await request(
-
-        "/chats/" +
-
-        encodeURIComponent(
-          chatId
-        ),
-
-        {
-          method:
-            "DELETE"
-        }
-
-      );
-
-
-    await parseResponse(
-      response
-    );
+    const password =
+      document
+        .getElementById(
+          "loginPassword"
+        )
+        .value;
 
 
     if (
-      currentChatId ===
-      chatId
+      !username
+      || !password
     ) {
 
-      currentChatId =
-        null;
-
-      renderMessages([]);
-
-    }
-
-
-    await loadChats();
-
-
-    if (!currentChatId) {
-
-      await createNewChat();
-
-    }
-
-
-  } catch (error) {
-
-    setMessage(
-      "appMessage",
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   MESSAGES
-===================================================== */
-
-function renderMessages(
-  messages
-) {
-
-  const container =
-    document.getElementById(
-      "messages"
-    );
-
-
-  container.innerHTML = "";
-
-
-  if (!messages.length) {
-
-    container.innerHTML =
-      `
-      <div class="empty-state">
-        Start a new conversation with your AI Agent.
-      </div>
-      `;
-
-    return;
-
-  }
-
-
-  messages.forEach(
-    function(message) {
-
-      appendMessage(
-        message.role,
-        message.content
+      setMessage(
+        "loginMessage",
+        "Please enter username and password."
       );
-
-    }
-  );
-
-}
-
-
-function appendMessage(
-  role,
-  content
-) {
-
-  const container =
-    document.getElementById(
-      "messages"
-    );
-
-
-  const empty =
-    container.querySelector(
-      ".empty-state"
-    );
-
-
-  if (empty) {
-
-    empty.remove();
-
-  }
-
-
-  const row =
-    document.createElement(
-      "div"
-    );
-
-
-  row.className =
-    "message-row " +
-    (
-      role === "user"
-        ? "user"
-        : "assistant"
-    );
-
-
-  const bubble =
-    document.createElement(
-      "div"
-    );
-
-
-  bubble.className =
-    "message";
-
-
-  if (
-    role === "assistant"
-  ) {
-
-    bubble.innerHTML =
-      marked.parse(
-        content || ""
-      );
-
-  } else {
-
-    bubble.textContent =
-      content || "";
-
-  }
-
-
-  row.appendChild(
-    bubble
-  );
-
-
-  container.appendChild(
-    row
-  );
-
-
-  container.scrollTop =
-    container.scrollHeight;
-
-}
-
-
-/* =====================================================
-   SEND MESSAGE
-===================================================== */
-
-async function sendMessage() {
-
-  const input =
-    document.getElementById(
-      "messageInput"
-    );
-
-
-  const sendButton =
-    document.getElementById(
-      "sendBtn"
-    );
-
-
-  const message =
-    input.value.trim();
-
-
-  if (
-    !message &&
-    !uploadedFilePath
-  ) {
-
-    return;
-
-  }
-
-
-  if (!currentChatId) {
-
-    await createNewChat();
-
-
-    if (!currentChatId) {
 
       return;
-
-    }
-
-  }
-
-
-  const visibleMessage =
-    message ||
-    "Please analyze the uploaded file.";
-
-
-  appendMessage(
-    "user",
-    visibleMessage
-  );
-
-
-  input.value = "";
-
-
-  sendButton.disabled =
-    true;
-
-
-  try {
-
-    const response =
-      await request(
-        "/chat",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              chat_id:
-                currentChatId,
-
-              message:
-                visibleMessage,
-
-              file_path:
-                uploadedFilePath
-            })
-        }
-      );
-
-
-    const data =
-      await parseResponse(
-        response
-      );
-
-
-    appendMessage(
-      "assistant",
-      data.answer || ""
-    );
-
-
-    if (data.title) {
-
-      document
-        .getElementById(
-          "currentChatTitle"
-        )
-        .textContent =
-        data.title;
-
     }
 
 
-    uploadedFilePath =
-      null;
-
-
-    document
-      .getElementById(
-        "selectedFile"
-      )
-      .textContent =
-      "";
-
-
-    document
-      .getElementById(
-        "fileInput"
-      )
-      .value =
-      "";
-
-
-    await loadChats();
-
-
-  } catch (error) {
-
-    appendMessage(
-      "assistant",
-      "Error: " +
-      error.message
+    setMessage(
+      "loginMessage",
+      "Logging in...",
+      true
     );
 
 
-  } finally {
+    try {
 
-    sendButton.disabled =
-      false;
+      const response =
+        await fetch(
+          API_URL + "/login",
+          {
 
-    input.focus();
+            method:
+              "POST",
 
-  }
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
 
-}
+            body:
+              JSON.stringify({
+                username:
+                  username,
 
+                password:
+                  password
+              })
 
-/* =====================================================
-   FILE UPLOAD
-===================================================== */
-
-document
-  .getElementById(
-    "fileInput"
-  )
-  .addEventListener(
-    "change",
-    async function(event) {
-
-      const file =
-        event.target.files[0];
-
-
-      if (!file) {
-
-        return;
-
-      }
-
-
-      setMessage(
-        "appMessage",
-        "Uploading file...",
-        true
-      );
-
-
-      const formData =
-        new FormData();
-
-
-      formData.append(
-        "file",
-        file
-      );
-
-
-      try {
-
-        const response =
-          await request(
-            "/upload",
-            {
-              method:
-                "POST",
-
-              body:
-                formData
-            }
-          );
-
-
-        const data =
-          await parseResponse(
-            response
-          );
-
-
-        uploadedFilePath =
-          data.file_path;
-
-
-        document
-          .getElementById(
-            "selectedFile"
-          )
-          .textContent =
-          "Attached: " +
-          (
-            data.filename ||
-            file.name
-          );
-
-
-        setMessage(
-          "appMessage",
-          "File uploaded.",
-          true
+          }
         );
 
 
-      } catch (error) {
+      const data =
+        await parseResponse(
+          response
+        );
 
-        uploadedFilePath =
-          null;
 
+      token =
+        data.token;
+
+      currentUsername =
+        data.username;
+
+
+      localStorage.setItem(
+        "token",
+        token
+      );
+
+      localStorage.setItem(
+        "username",
+        currentUsername
+      );
+
+
+      setMessage(
+        "loginMessage",
+        ""
+      );
+
+
+      await showApp();
+
+
+    } catch (error) {
+
+      if (
+        error.message
+          .toLowerCase()
+          .includes(
+            "verify your email"
+          )
+      ) {
 
         setMessage(
-          "appMessage",
+          "loginMessage",
+          error.message
+        );
+
+      } else {
+
+        setMessage(
+          "loginMessage",
           error.message
         );
 
       }
 
     }
-  );
-
-
-/* =====================================================
-   ENTER TO SEND
-===================================================== */
-
-document
-  .getElementById(
-    "messageInput"
-  )
-  .addEventListener(
-    "keydown",
-    function(event) {
-
-      if (
-        event.key ===
-        "Enter"
-      ) {
-
-        event.preventDefault();
-
-        sendMessage();
-
-      }
-
-    }
-  );
-
-
-/* =====================================================
-   VOICE
-===================================================== */
-
-function startVoiceInput() {
-
-  const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-
-  if (!SpeechRecognition) {
-
-    setMessage(
-      "appMessage",
-      "Voice input is not supported in this browser."
-    );
-
-    return;
 
   }
 
 
-  const recognition =
-    new SpeechRecognition();
+  /* =========================================
+     REGISTER
+  ========================================== */
+
+  async function register() {
+
+    const username =
+      document
+        .getElementById(
+          "registerUsername"
+        )
+        .value
+        .trim();
+
+    const email =
+      document
+        .getElementById(
+          "registerEmail"
+        )
+        .value
+        .trim();
+
+    const password =
+      document
+        .getElementById(
+          "registerPassword"
+        )
+        .value;
 
 
-  recognition.lang =
-    "en-US";
+    if (
+      !username
+      || !email
+      || !password
+    ) {
+
+      setMessage(
+        "registerMessage",
+        "Please fill all fields."
+      );
+
+      return;
+    }
 
 
-  recognition.interimResults =
-    false;
+    setMessage(
+      "registerMessage",
+      "Creating account...",
+      true
+    );
 
 
-  recognition.maxAlternatives =
-    1;
+    try {
 
+      const response =
+        await fetch(
+          API_URL + "/register",
+          {
 
-  setMessage(
-    "appMessage",
-    "Listening...",
-    true
-  );
+            method:
+              "POST",
 
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
 
-  recognition.onresult =
-    function(event) {
+            body:
+              JSON.stringify({
+                username:
+                  username,
 
-      const transcript =
-        event
-          .results[0][0]
-          .transcript;
+                email:
+                  email,
 
+                password:
+                  password
+              })
 
-      const input =
-        document.getElementById(
-          "messageInput"
+          }
         );
 
 
-      input.value =
-        input.value
-          ? input.value +
-            " " +
-            transcript
-          : transcript;
+      const data =
+        await parseResponse(
+          response
+        );
+
+
+      pendingVerificationEmail =
+        data.email || email;
+
+
+      localStorage.setItem(
+        "pendingVerificationEmail",
+        pendingVerificationEmail
+      );
+
+
+      showVerificationScreen(
+        pendingVerificationEmail
+      );
 
 
       setMessage(
-        "appMessage",
-        ""
+        "verifyMessage",
+        "Verification code sent to your email.",
+        true
       );
 
-    };
 
-
-  recognition.onerror =
-    function(event) {
+    } catch (error) {
 
       setMessage(
-        "appMessage",
-        "Voice error: " +
-        event.error
+        "registerMessage",
+        error.message
       );
 
-    };
+    }
+
+  }
 
 
-  recognition.start();
+  /* =========================================
+     VERIFY EMAIL
+  ========================================== */
 
-}
+  async function verifyEmail() {
+
+    const email =
+      document
+        .getElementById(
+          "verificationEmail"
+        )
+        .value
+        .trim();
+
+    const code =
+      document
+        .getElementById(
+          "verificationCode"
+        )
+        .value
+        .trim();
 
 
-/* =====================================================
-   START
-===================================================== */
+    if (
+      !email
+      || !code
+    ) {
 
-if (token) {
+      setMessage(
+        "verifyMessage",
+        "Enter email and 6-digit code."
+      );
 
-  showApp();
+      return;
+    }
 
-} else {
 
-  showLogin();
+    if (
+      code.length !== 6
+      || !/^\d{6}$/.test(code)
+    ) {
 
-}
+      setMessage(
+        "verifyMessage",
+        "Verification code must be 6 digits."
+      );
+
+      return;
+    }
+
+
+    setMessage(
+      "verifyMessage",
+      "Verifying email...",
+      true
+    );
+
+
+    try {
+
+      const response =
+        await fetch(
+          API_URL + "/verify-email",
+          {
+
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                email:
+                  email,
+
+                code:
+                  code
+              })
+
+          }
+        );
+
+
+      const data =
+        await parseResponse(
+          response
+        );
+
+
+      localStorage.removeItem(
+        "pendingVerificationEmail"
+      );
+
+      pendingVerificationEmail =
+        "";
+
+
+      if (
+        data.token
+        && data.username
+      ) {
+
+        token =
+          data.token;
+
+        currentUsername =
+          data.username;
+
+
+        localStorage.setItem(
+          "token",
+          token
+        );
+
+        localStorage.setItem(
+          "username",
+          currentUsername
+        );
+
+
+        setMessage(
+          "verifyMessage",
+          "Email verified successfully.",
+          true
+        );
+
+
+        await showApp();
+
+        return;
+      }
+
+
+      setMessage(
+        "verifyMessage",
+        data.message
+        || "Email verified successfully.",
+        true
+      );
+
+
+      setTimeout(
+        showLogin,
+        1200
+      );
+
+
+    } catch (error) {
+
+      setMessage(
+        "verifyMessage",
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     RESEND VERIFICATION
+  ========================================== */
+
+  async function resendVerificationCode() {
+
+    const email =
+      document
+        .getElementById(
+          "verificationEmail"
+        )
+        .value
+        .trim();
+
+
+    if (!email) {
+
+      setMessage(
+        "verifyMessage",
+        "Please enter your email."
+      );
+
+      return;
+    }
+
+
+    setMessage(
+      "verifyMessage",
+      "Sending new code...",
+      true
+    );
+
+
+    try {
+
+      const response =
+        await fetch(
+          API_URL
+          + "/resend-verification-code",
+          {
+
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                email:
+                  email
+              })
+
+          }
+        );
+
+
+      const data =
+        await parseResponse(
+          response
+        );
+
+
+      pendingVerificationEmail =
+        email;
+
+
+      localStorage.setItem(
+        "pendingVerificationEmail",
+        email
+      );
+
+
+      setMessage(
+        "verifyMessage",
+        data.message
+        || "Verification code sent.",
+        true
+      );
+
+
+    } catch (error) {
+
+      setMessage(
+        "verifyMessage",
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     FORGOT PASSWORD
+  ========================================== */
+
+  async function sendResetCode() {
+
+    const email =
+      document
+        .getElementById(
+          "forgotEmail"
+        )
+        .value
+        .trim();
+
+
+    if (!email) {
+
+      setMessage(
+        "forgotMessage",
+        "Please enter your email."
+      );
+
+      return;
+    }
+
+
+    setMessage(
+      "forgotMessage",
+      "Sending reset code...",
+      true
+    );
+
+
+    try {
+
+      const response =
+        await fetch(
+          API_URL
+          + "/forgot-password",
+          {
+
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                email:
+                  email
+              })
+
+          }
+        );
+
+
+      const data =
+        await parseResponse(
+          response
+        );
+
+
+      showResetPassword(
+        email
+      );
+
+
+      setMessage(
+        "resetMessage",
+        data.message
+        || "Reset code sent.",
+        true
+      );
+
+
+    } catch (error) {
+
+      setMessage(
+        "forgotMessage",
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     RESET PASSWORD
+  ========================================== */
+
+  async function resetPassword() {
+
+    const email =
+      document
+        .getElementById(
+          "resetEmail"
+        )
+        .value
+        .trim();
+
+    const code =
+      document
+        .getElementById(
+          "resetCode"
+        )
+        .value
+        .trim();
+
+    const newPassword =
+      document
+        .getElementById(
+          "newPassword"
+        )
+        .value;
+
+
+    if (
+      !email
+      || !code
+      || !newPassword
+    ) {
+
+      setMessage(
+        "resetMessage",
+        "Please fill all fields."
+      );
+
+      return;
+    }
+
+
+    if (
+      code.length !== 6
+      || !/^\d{6}$/.test(code)
+    ) {
+
+      setMessage(
+        "resetMessage",
+        "Reset code must be 6 digits."
+      );
+
+      return;
+    }
+
+
+    if (
+      newPassword.length
+      < 6
+    ) {
+
+      setMessage(
+        "resetMessage",
+        "Password must be at least 6 characters."
+      );
+
+      return;
+    }
+
+
+    setMessage(
+      "resetMessage",
+      "Resetting password...",
+      true
+    );
+
+
+    try {
+
+      const response =
+        await fetch(
+          API_URL
+          + "/reset-password",
+          {
+
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+
+                email:
+                  email,
+
+                code:
+                  code,
+
+                new_password:
+                  newPassword
+
+              })
+
+          }
+        );
+
+
+      const data =
+        await parseResponse(
+          response
+        );
+
+
+      showLogin();
+
+
+      setMessage(
+        "loginMessage",
+        data.message
+        || "Password reset successfully.",
+        true
+      );
+
+
+    } catch (error) {
+
+      setMessage(
+        "resetMessage",
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     LOGOUT
+  ========================================== */
+
+  function logout(
+    showMessage = true
+  ) {
+
+    token = "";
+
+    currentUsername = "";
+
+    currentChatId = null;
+
+    uploadedFilePath = null;
+
+
+    localStorage.removeItem(
+      "token"
+    );
+
+    localStorage.removeItem(
+      "username"
+    );
+
+
+    document
+      .getElementById(
+        "appScreen"
+      )
+      .classList
+      .add("hidden");
+
+
+    showLogin();
+
+
+    if (showMessage) {
+
+      setMessage(
+        "loginMessage",
+        "Logged out.",
+        true
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     SHOW APP
+  ========================================== */
+
+  async function showApp() {
+
+    hideAllAuthScreens();
+
+    document
+      .getElementById(
+        "appScreen"
+      )
+      .classList
+      .remove("hidden");
+
+
+    try {
+
+      await loadChats();
+
+
+      if (!currentChatId) {
+
+        await createNewChat();
+
+      }
+
+
+    } catch (error) {
+
+      setAppMessage(
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     LOAD CHATS
+  ========================================== */
+
+  async function loadChats() {
+
+    const response =
+      await request(
+        "/chats"
+      );
+
+
+    const data =
+      await parseResponse(
+        response
+      );
+
+
+    const list =
+      document.getElementById(
+        "chatList"
+      );
+
+
+    list.innerHTML = "";
+
+
+    const chats =
+      data.chats || [];
+
+
+    chats.forEach(
+      chatObject => {
+
+        const item =
+          document.createElement(
+            "div"
+          );
+
+
+        item.className =
+          "chat-item"
+          + (
+            chatObject.chat_id
+            === currentChatId
+              ? " active"
+              : ""
+          );
+
+
+        const title =
+          document.createElement(
+            "div"
+          );
+
+
+        title.className =
+          "chat-title";
+
+
+        title.textContent =
+          chatObject.title
+          || "New Chat";
+
+
+        title.onclick =
+          () => openChat(
+            chatObject.chat_id
+          );
+
+
+        const deleteButton =
+          document.createElement(
+            "button"
+          );
+
+
+        deleteButton.className =
+          "delete-chat";
+
+
+        deleteButton.textContent =
+          "×";
+
+
+        deleteButton.onclick =
+          async event => {
+
+            event.stopPropagation();
+
+            await deleteChat(
+              chatObject.chat_id
+            );
+
+          };
+
+
+        item.appendChild(
+          title
+        );
+
+
+        item.appendChild(
+          deleteButton
+        );
+
+
+        list.appendChild(
+          item
+        );
+
+      }
+    );
+
+
+    if (
+      currentChatId
+      && !chats.some(
+        chatObject =>
+          chatObject.chat_id
+          === currentChatId
+      )
+    ) {
+
+      currentChatId = null;
+
+    }
+
+  }
+
+
+  /* =========================================
+     CREATE CHAT
+  ========================================== */
+
+  async function createNewChat() {
+
+    setAppMessage(
+      ""
+    );
+
+
+    try {
+
+      const response =
+        await request(
+          "/chats",
+          {
+
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                title:
+                  "New Chat"
+              })
+
+          }
+        );
+
+
+      const data =
+        await parseResponse(
+          response
+        );
+
+
+      currentChatId =
+        data.chat_id;
+
+
+      uploadedFilePath =
+        null;
+
+
+      document
+        .getElementById(
+          "selectedFile"
+        )
+        .textContent = "";
+
+
+      document
+        .getElementById(
+          "currentChatTitle"
+        )
+        .textContent =
+          data.title
+          || "New Chat";
+
+
+      renderMessages(
+        []
+      );
+
+
+      await loadChats();
+
+
+    } catch (error) {
+
+      setAppMessage(
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     OPEN CHAT
+  ========================================== */
+
+  async function openChat(
+    chatId
+  ) {
+
+    try {
+
+      currentChatId =
+        chatId;
+
+
+      uploadedFilePath =
+        null;
+
+
+      document
+        .getElementById(
+          "selectedFile"
+        )
+        .textContent = "";
+
+
+      const response =
+        await request(
+          "/chats/"
+          + encodeURIComponent(
+            chatId
+          )
+        );
+
+
+      const data =
+        await parseResponse(
+          response
+        );
+
+
+      document
+        .getElementById(
+          "currentChatTitle"
+        )
+        .textContent =
+          data.title
+          || "New Chat";
+
+
+      renderMessages(
+        data.messages || []
+      );
+
+
+      await loadChats();
+
+
+    } catch (error) {
+
+      setAppMessage(
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     DELETE CHAT
+  ========================================== */
+
+  async function deleteChat(
+    chatId
+  ) {
+
+    try {
+
+      const response =
+        await request(
+          "/chats/"
+          + encodeURIComponent(
+            chatId
+          ),
+
+          {
+            method:
+              "DELETE"
+          }
+        );
+
+
+      await parseResponse(
+        response
+      );
+
+
+      if (
+        currentChatId
+        === chatId
+      ) {
+
+        currentChatId =
+          null;
+
+        renderMessages(
+          []
+        );
+
+      }
+
+
+      await loadChats();
+
+
+      if (!currentChatId) {
+
+        await createNewChat();
+
+      }
+
+
+    } catch (error) {
+
+      setAppMessage(
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================
+     MESSAGES
+  ========================================== */
+
+  function renderMessages(
+    messages
+  ) {
+
+    const container =
+      document.getElementById(
+        "messages"
+      );
+
+
+    container.innerHTML =
+      "";
+
+
+    if (!messages.length) {
+
+      container.innerHTML =
+        `
+        <div class="empty-state">
+          Start a new conversation with your AI Agent.
+        </div>
+        `;
+
+      return;
+    }
+
+
+    messages.forEach(
+      message => {
+
+        appendMessage(
+          message.role,
+          message.content
+        );
+
+      }
+    );
+
+  }
+
+
+  function appendMessage(
+    role,
+    content
+  ) {
+
+    const container =
+      document.getElementById(
+        "messages"
+      );
+
+
+    const empty =
+      container.querySelector(
+        ".empty-state"
+      );
+
+
+    if (empty) {
+
+      empty.remove();
+
+    }
+
+
+    const row =
+      document.createElement(
+        "div"
+      );
+
+
+    row.className =
+      "message-row "
+      + (
+        role === "user"
+          ? "user"
+          : "assistant"
+      );
+
+
+    const bubble =
+      document.createElement(
+        "div"
+      );
+
+
+    bubble.className =
+      "message";
+
+
+    if (
+      role === "assistant"
+    ) {
+
+      bubble.innerHTML =
+        marked.parse(
+          content || ""
+        );
+
+    } else {
+
+      bubble.textContent =
+        content || "";
+
+    }
+
+
+    row.appendChild(
+      bubble
+    );
+
+
+    container.appendChild(
+      row
+    );
+
+
+    container.scrollTop =
+      container.scrollHeight;
+
+  }
+
+
+  /* =========================================
+     SEND MESSAGE
+  ========================================== */
+
+  async function sendMessage() {
+
+    const input =
+      document.getElementById(
+        "messageInput"
+      );
+
+
+    const sendButton =
+      document.getElementById(
+        "sendBtn"
+      );
+
+
+    const message =
+      input.value.trim();
+
+
+    if (
+      !message
+      && !uploadedFilePath
+    ) {
+
+      return;
+
+    }
+
+
+    if (!currentChatId) {
+
+      await createNewChat();
+
+
+      if (!currentChatId) {
+
+        return;
+
+      }
+
+    }
+
+
+    const visibleMessage =
+      message
+      || "Please analyze the uploaded file.";
+
+
+    appendMessage(
+      "user",
+      visibleMessage
+    );
+
+
+    input.value =
+      "";
+
+
+    sendButton.disabled =
+      true;
+
+
+    try {
+
+      const response =
+        await request(
+          "/chat",
+          {
+
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+
+                chat_id:
+                  currentChatId,
+
+                message:
+                  visibleMessage,
+
+                file_path:
+                  uploadedFilePath
+
+              })
+
+          }
+        );
+
+
+      const data =
+        await parseResponse(
+          response
+        );
+
+
+      appendMessage(
+        "assistant",
+        data.answer || ""
+      );
+
+
+      if (data.title) {
+
+        document
+          .getElementById(
+            "currentChatTitle"
+          )
+          .textContent =
+            data.title;
+
+      }
+
+
+      uploadedFilePath =
+        null;
+
+
+      document
+        .getElementById(
+          "selectedFile"
+        )
+        .textContent = "";
+
+
+      document
+        .getElementById(
+          "fileInput"
+        )
+        .value = "";
+
+
+      await loadChats();
+
+
+    } catch (error) {
+
+      appendMessage(
+        "assistant",
+        "Error: "
+        + error.message
+      );
+
+
+    } finally {
+
+      sendButton.disabled =
+        false;
+
+
+      input.focus();
+
+    }
+
+  }
+
+
+  document
+    .getElementById(
+      "messageInput"
+    )
+    .addEventListener(
+      "keydown",
+      event => {
+
+        if (
+          event.key
+          === "Enter"
+        ) {
+
+          event.preventDefault();
+
+          sendMessage();
+
+        }
+
+      }
+    );
+
+
+  /* =========================================
+     FILE UPLOAD
+  ========================================== */
+
+  document
+    .getElementById(
+      "fileInput"
+    )
+    .addEventListener(
+      "change",
+      async event => {
+
+        const file =
+          event.target.files[0];
+
+
+        if (!file) {
+
+          return;
+
+        }
+
+
+        setAppMessage(
+          "Uploading file...",
+          true
+        );
+
+
+        const formData =
+          new FormData();
+
+
+        formData.append(
+          "file",
+          file
+        );
+
+
+        try {
+
+          const response =
+            await request(
+              "/upload",
+              {
+
+                method:
+                  "POST",
+
+                body:
+                  formData
+
+              }
+            );
+
+
+          const data =
+            await parseResponse(
+              response
+            );
+
+
+          uploadedFilePath =
+            data.file_path;
+
+
+          document
+            .getElementById(
+              "selectedFile"
+            )
+            .textContent =
+              "Attached: "
+              + (
+                data.filename
+                || file.name
+              );
+
+
+          setAppMessage(
+            "File uploaded.",
+            true
+          );
+
+
+        } catch (error) {
+
+          uploadedFilePath =
+            null;
+
+
+          setAppMessage(
+            error.message
+          );
+
+        }
+
+      }
+    );
+
+
+  /* =========================================
+     VOICE
+  ========================================== */
+
+  function startVoiceInput() {
+
+    const SpeechRecognition =
+      window.SpeechRecognition
+      || window.webkitSpeechRecognition;
+
+
+    if (!SpeechRecognition) {
+
+      setAppMessage(
+        "Voice input is not supported in this browser."
+      );
+
+      return;
+
+    }
+
+
+    const recognition =
+      new SpeechRecognition();
+
+
+    recognition.lang =
+      "en-US";
+
+
+    recognition.interimResults =
+      false;
+
+
+    recognition.maxAlternatives =
+      1;
+
+
+    setAppMessage(
+      "Listening...",
+      true
+    );
+
+
+    recognition.onresult =
+      event => {
+
+        const transcript =
+          event.results[0][0]
+            .transcript;
+
+
+        const input =
+          document.getElementById(
+            "messageInput"
+          );
+
+
+        input.value =
+          input.value
+            ? input.value
+              + " "
+              + transcript
+            : transcript;
+
+
+        setAppMessage(
+          ""
+        );
+
+      };
+
+
+    recognition.onerror =
+      event => {
+
+        setAppMessage(
+          "Voice error: "
+          + event.error
+        );
+
+      };
+
+
+    recognition.start();
+
+  }
+
+
+  /* =========================================
+     STARTUP
+  ========================================== */
+
+  if (token) {
+
+    showApp();
+
+  } else if (
+    pendingVerificationEmail
+  ) {
+
+    showVerificationScreen(
+      pendingVerificationEmail
+    );
+
+  } else {
+
+    showLogin();
+
+  }
 
 </script>
 
