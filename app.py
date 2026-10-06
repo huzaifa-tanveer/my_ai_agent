@@ -78,18 +78,12 @@ SMTP_FROM = os.getenv(
 )
 
 SMTP_USE_TLS = (
-    os.getenv(
-        "SMTP_USE_TLS",
-        "true",
-    ).lower()
+    os.getenv("SMTP_USE_TLS", "true").lower()
     == "true"
 )
 
 SMTP_USE_SSL = (
-    os.getenv(
-        "SMTP_USE_SSL",
-        "false",
-    ).lower()
+    os.getenv("SMTP_USE_SSL", "false").lower()
     == "true"
 )
 
@@ -109,7 +103,6 @@ if not DATABASE_URL:
 if DATABASE_URL.startswith(
     "postgres://"
 ):
-
     DATABASE_URL = DATABASE_URL.replace(
         "postgres://",
         "postgresql://",
@@ -493,9 +486,7 @@ os.makedirs(
 # EMAIL HELPERS
 # =========================================================
 
-def normalize_email(
-    email: str,
-):
+def normalize_email(email: str):
 
     return (
         email
@@ -504,9 +495,7 @@ def normalize_email(
     )
 
 
-def valid_email(
-    email: str,
-):
+def valid_email(email: str):
 
     pattern = (
         r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
@@ -690,14 +679,11 @@ def create_token(
 ):
 
     payload = {
-
-        "username":
-            username,
-
-        "exp":
+        "username": username,
+        "exp": (
             datetime.utcnow()
-            + timedelta(days=7),
-
+            + timedelta(days=7)
+        ),
     }
 
     return jwt.encode(
@@ -740,7 +726,7 @@ def get_current_user(
             algorithms=["HS256"],
         )
 
-        return payload[
+        username = payload[
             "username"
         ]
 
@@ -752,6 +738,34 @@ def get_current_user(
                 "Invalid or expired token"
             ),
         )
+
+    db = SessionLocal()
+
+    try:
+
+        user = (
+            db.query(User)
+            .filter(
+                User.username
+                == username
+            )
+            .first()
+        )
+
+        if not user:
+
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "User account no longer exists"
+                ),
+            )
+
+        return username
+
+    finally:
+
+        db.close()
 
 
 # =========================================================
@@ -792,6 +806,17 @@ class VerifyEmailRequest(BaseModel):
 class ResendVerificationRequest(BaseModel):
 
     email: str
+
+
+class ChangePasswordRequest(BaseModel):
+
+    current_password: str
+    new_password: str
+
+
+class DeleteAccountRequest(BaseModel):
+
+    password: str
 
 
 class CreateChatRequest(BaseModel):
@@ -981,19 +1006,12 @@ def register(
         db.commit()
 
         return {
-
-            "message":
-                (
-                    "Account created. "
-                    "Please verify your email."
-                ),
-
-            "email":
-                email,
-
-            "verification_required":
-                True,
-
+            "message": (
+                "Account created. "
+                "Please verify your email."
+            ),
+            "email": email,
+            "verification_required": True,
         }
 
     finally:
@@ -1019,9 +1037,7 @@ def verify_email(
         .strip()
     )
 
-    if not valid_email(
-        email
-    ):
+    if not valid_email(email):
 
         raise HTTPException(
             status_code=400,
@@ -1066,18 +1082,14 @@ def verify_email(
         if user.email_verified:
 
             return {
-
                 "message":
                     "Email already verified.",
-
                 "token":
                     create_token(
                         user.username
                     ),
-
                 "username":
                     user.username,
-
             }
 
         verification = (
@@ -1147,13 +1159,11 @@ def verify_email(
             )
 
         user.email_verified = True
-
         verification.used = True
 
         db.commit()
 
         return {
-
             "message":
                 (
                     "Email verified "
@@ -1167,7 +1177,6 @@ def verify_email(
 
             "username":
                 user.username,
-
         }
 
     finally:
@@ -1190,9 +1199,7 @@ def resend_verification_code(
         data.email
     )
 
-    if not valid_email(
-        email
-    ):
+    if not valid_email(email):
 
         raise HTTPException(
             status_code=400,
@@ -1229,23 +1236,19 @@ def resend_verification_code(
         if not user:
 
             return {
-
                 "message":
                     (
                         "If the account exists, "
                         "a verification code "
                         "has been sent."
                     )
-
             }
 
         if user.email_verified:
 
             return {
-
                 "message":
                     "Email is already verified."
-
             }
 
         old_codes = (
@@ -1323,13 +1326,11 @@ def resend_verification_code(
         db.commit()
 
         return {
-
             "message":
                 (
                     "Verification code "
                     "sent successfully."
                 )
-
         }
 
     finally:
@@ -1401,7 +1402,6 @@ def login(
             )
 
         return {
-
             "token":
                 create_token(
                     username
@@ -1409,8 +1409,305 @@ def login(
 
             "username":
                 username,
-
         }
+
+    finally:
+
+        db.close()
+
+
+# =========================================================
+# PROFILE
+# =========================================================
+
+@app.get("/profile")
+def get_profile(
+    authorization: Optional[str] = Header(None),
+):
+
+    username = get_current_user(
+        authorization
+    )
+
+    db = SessionLocal()
+
+    try:
+
+        user = (
+            db.query(User)
+            .filter(
+                User.username
+                == username
+            )
+            .first()
+        )
+
+        if not user:
+
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
+
+        return {
+            "username":
+                user.username,
+
+            "email":
+                user.email,
+
+            "email_verified":
+                user.email_verified,
+
+            "created_at":
+                (
+                    user.created_at.isoformat()
+                    if user.created_at
+                    else None
+                ),
+        }
+
+    finally:
+
+        db.close()
+
+
+# =========================================================
+# CHANGE PASSWORD
+# =========================================================
+
+@app.post("/change-password")
+def change_password(
+    data: ChangePasswordRequest,
+    authorization: Optional[str] = Header(None),
+):
+
+    username = get_current_user(
+        authorization
+    )
+
+    if len(
+        data.new_password
+    ) < 6:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "New password must be "
+                "at least 6 characters"
+            ),
+        )
+
+    db = SessionLocal()
+
+    try:
+
+        user = (
+            db.query(User)
+            .filter(
+                User.username
+                == username
+            )
+            .first()
+        )
+
+        if not user:
+
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
+
+        valid = bcrypt.checkpw(
+            data.current_password.encode(),
+            user.password_hash.encode(),
+        )
+
+        if not valid:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Current password is incorrect"
+                ),
+            )
+
+        same_password = bcrypt.checkpw(
+            data.new_password.encode(),
+            user.password_hash.encode(),
+        )
+
+        if same_password:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "New password must be "
+                    "different from current password"
+                ),
+            )
+
+        new_hash = (
+            bcrypt.hashpw(
+                data.new_password.encode(),
+                bcrypt.gensalt(),
+            )
+            .decode()
+        )
+
+        user.password_hash = (
+            new_hash
+        )
+
+        db.commit()
+
+        return {
+            "message":
+                "Password changed successfully."
+        }
+
+    finally:
+
+        db.close()
+
+
+# =========================================================
+# DELETE ACCOUNT
+# =========================================================
+
+@app.delete("/account")
+def delete_account(
+    data: DeleteAccountRequest,
+    authorization: Optional[str] = Header(None),
+):
+
+    username = get_current_user(
+        authorization
+    )
+
+    db = SessionLocal()
+
+    try:
+
+        user = (
+            db.query(User)
+            .filter(
+                User.username
+                == username
+            )
+            .first()
+        )
+
+        if not user:
+
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
+
+        valid = bcrypt.checkpw(
+            data.password.encode(),
+            user.password_hash.encode(),
+        )
+
+        if not valid:
+
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Password is incorrect"
+                ),
+            )
+
+        # Extra cleanup for safety.
+
+        db.query(
+            PasswordResetCode
+        ).filter(
+            PasswordResetCode.username
+            == username
+        ).delete(
+            synchronize_session=False
+        )
+
+        db.query(
+            EmailVerificationCode
+        ).filter(
+            EmailVerificationCode.username
+            == username
+        ).delete(
+            synchronize_session=False
+        )
+
+        db.query(
+            UserMemory
+        ).filter(
+            UserMemory.username
+            == username
+        ).delete(
+            synchronize_session=False
+        )
+
+        # Chat messages are deleted through
+        # the Chat -> Message relationship.
+
+        db.delete(
+            user
+        )
+
+        db.commit()
+
+        # Remove locally uploaded user files,
+        # when they exist on this instance.
+
+        user_upload_folder = os.path.join(
+            UPLOAD_DIR,
+            username,
+        )
+
+        if os.path.isdir(
+            user_upload_folder
+        ):
+
+            import shutil
+
+            try:
+
+                shutil.rmtree(
+                    user_upload_folder
+                )
+
+            except Exception as file_error:
+
+                print(
+                    "ACCOUNT FILE CLEANUP ERROR:",
+                    str(file_error),
+                )
+
+        return {
+            "message":
+                "Account deleted successfully."
+        }
+
+    except HTTPException:
+
+        raise
+
+    except Exception as error:
+
+        db.rollback()
+
+        print(
+            "DELETE ACCOUNT ERROR:",
+            str(error),
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Could not delete account."
+            ),
+        )
 
     finally:
 
@@ -1469,14 +1766,12 @@ def forgot_password(
         if not user:
 
             return {
-
                 "message":
                     (
                         "If this email is "
                         "registered, a reset "
                         "code has been sent."
                     )
-
             }
 
         old_codes = (
@@ -1556,14 +1851,12 @@ def forgot_password(
         db.commit()
 
         return {
-
             "message":
                 (
                     "If this email is "
                     "registered, a reset "
                     "code has been sent."
                 )
-
         }
 
     finally:
@@ -1725,14 +2018,12 @@ def reset_password(
         db.commit()
 
         return {
-
             "message":
                 (
                     "Password reset "
                     "successfully. "
                     "You can now login."
                 )
-
         }
 
     finally:
@@ -1774,9 +2065,7 @@ def web_search(
         )
 
         return [
-
             {
-
                 "title":
                     item.get(
                         "title"
@@ -1791,12 +2080,10 @@ def web_search(
                     item.get(
                         "body"
                     ),
-
             }
 
             for item
             in results
-
         ]
 
     except Exception as e:
@@ -1965,7 +2252,6 @@ def read_csv_file(
         )
 
         return {
-
             "rows":
                 len(
                     dataframe
@@ -1982,7 +2268,6 @@ def read_csv_file(
                 .to_dict(
                     orient="records"
                 ),
-
         }
 
     except Exception as e:
@@ -2038,7 +2323,6 @@ def read_pdf_file(
             )
 
         return {
-
             "pages":
                 len(
                     reader.pages
@@ -2046,7 +2330,6 @@ def read_pdf_file(
 
             "content":
                 content[:30000],
-
         }
 
     except Exception as e:
@@ -2064,9 +2347,7 @@ def read_pdf_file(
 tools = [
 
     {
-
-        "type":
-            "function",
+        "type": "function",
 
         "function": {
 
@@ -2077,40 +2358,29 @@ tools = [
                 "Add two numbers.",
 
             "parameters": {
-
-                "type":
-                    "object",
+                "type": "object",
 
                 "properties": {
 
                     "a": {
-                        "type":
-                            "number"
+                        "type": "number"
                     },
 
                     "b": {
-                        "type":
-                            "number"
+                        "type": "number"
                     },
-
                 },
 
                 "required": [
                     "a",
                     "b",
                 ],
-
             },
-
         },
-
     },
 
-
     {
-
-        "type":
-            "function",
+        "type": "function",
 
         "function": {
 
@@ -2118,30 +2388,17 @@ tools = [
                 "get_current_datetime",
 
             "description":
-                (
-                    "Get current "
-                    "date and time."
-                ),
+                "Get current date and time.",
 
             "parameters": {
-
-                "type":
-                    "object",
-
-                "properties":
-                    {},
-
+                "type": "object",
+                "properties": {},
             },
-
         },
-
     },
 
-
     {
-
-        "type":
-            "function",
+        "type": "function",
 
         "function": {
 
@@ -2155,34 +2412,24 @@ tools = [
                 ),
 
             "parameters": {
-
-                "type":
-                    "object",
+                "type": "object",
 
                 "properties": {
 
                     "query": {
-                        "type":
-                            "string"
+                        "type": "string"
                     },
-
                 },
 
                 "required": [
                     "query"
                 ],
-
             },
-
         },
-
     },
 
-
     {
-
-        "type":
-            "function",
+        "type": "function",
 
         "function": {
 
@@ -2191,46 +2438,34 @@ tools = [
 
             "description":
                 (
-                    "Save information "
-                    "the user explicitly "
-                    "asks to remember."
+                    "Save information the user "
+                    "explicitly asks to remember."
                 ),
 
             "parameters": {
-
-                "type":
-                    "object",
+                "type": "object",
 
                 "properties": {
 
                     "key": {
-                        "type":
-                            "string"
+                        "type": "string"
                     },
 
                     "value": {
-                        "type":
-                            "string"
+                        "type": "string"
                     },
-
                 },
 
                 "required": [
                     "key",
                     "value",
                 ],
-
             },
-
         },
-
     },
 
-
     {
-
-        "type":
-            "function",
+        "type": "function",
 
         "function": {
 
@@ -2238,40 +2473,27 @@ tools = [
                 "get_user_memory",
 
             "description":
-                (
-                    "Get saved user "
-                    "information."
-                ),
+                "Get saved user information.",
 
             "parameters": {
-
-                "type":
-                    "object",
+                "type": "object",
 
                 "properties": {
 
                     "key": {
-                        "type":
-                            "string"
+                        "type": "string"
                     },
-
                 },
 
                 "required": [
                     "key"
                 ],
-
             },
-
         },
-
     },
 
-
     {
-
-        "type":
-            "function",
+        "type": "function",
 
         "function": {
 
@@ -2282,34 +2504,24 @@ tools = [
                 "Read TXT file.",
 
             "parameters": {
-
-                "type":
-                    "object",
+                "type": "object",
 
                 "properties": {
 
                     "file_path": {
-                        "type":
-                            "string"
+                        "type": "string"
                     },
-
                 },
 
                 "required": [
                     "file_path"
                 ],
-
             },
-
         },
-
     },
 
-
     {
-
-        "type":
-            "function",
+        "type": "function",
 
         "function": {
 
@@ -2320,34 +2532,24 @@ tools = [
                 "Read CSV file.",
 
             "parameters": {
-
-                "type":
-                    "object",
+                "type": "object",
 
                 "properties": {
 
                     "file_path": {
-                        "type":
-                            "string"
+                        "type": "string"
                     },
-
                 },
 
                 "required": [
                     "file_path"
                 ],
-
             },
-
         },
-
     },
 
-
     {
-
-        "type":
-            "function",
+        "type": "function",
 
         "function": {
 
@@ -2358,35 +2560,23 @@ tools = [
                 "Read PDF file.",
 
             "parameters": {
-
-                "type":
-                    "object",
+                "type": "object",
 
                 "properties": {
 
                     "file_path": {
-                        "type":
-                            "string"
+                        "type": "string"
                     },
-
                 },
 
                 "required": [
                     "file_path"
                 ],
-
             },
-
         },
-
     },
-
 ]
 
-
-# =========================================================
-# SYSTEM PROMPT
-# =========================================================
 
 SYSTEM_PROMPT = """
 You are a helpful AI agent.
@@ -2474,13 +2664,11 @@ def create_chat(
         db.commit()
 
         return {
-
             "chat_id":
                 chat_id,
 
             "title":
                 chat_object.title,
-
         }
 
     finally:
@@ -2514,24 +2702,18 @@ def list_chats(
         )
 
         return {
-
             "chats": [
-
                 {
-
                     "chat_id":
                         item.chat_id,
 
                     "title":
                         item.title,
-
                 }
 
                 for item
                 in user_chats
-
             ]
-
         }
 
     finally:
@@ -2573,27 +2755,21 @@ def get_chat(
             )
 
         return {
-
             "title":
                 chat_object.title,
 
             "messages": [
-
                 {
-
                     "role":
                         item.role,
 
                     "content":
                         item.content,
-
                 }
 
                 for item
                 in chat_object.messages
-
             ],
-
         }
 
     finally:
@@ -2636,8 +2812,7 @@ def delete_chat(
             db.commit()
 
         return {
-            "success":
-                True
+            "success": True
         }
 
     finally:
@@ -2719,7 +2894,6 @@ async def upload_file(
         )
 
     return {
-
         "success":
             True,
 
@@ -2730,7 +2904,6 @@ async def upload_file(
             os.path.abspath(
                 path
             ),
-
     }
 
 
@@ -2808,9 +2981,7 @@ def execute_tool(
             arguments["file_path"]
         )
 
-    return (
-        "Unknown tool"
-    )
+    return "Unknown tool"
 
 
 # =========================================================
@@ -2858,21 +3029,15 @@ def generate_ai_answer(
                 messages=(
                     model_messages
                     + [
-
                         {
+                            "role": "system",
 
-                            "role":
-                                "system",
-
-                            "content":
-                                (
-                                    "Answer the user's "
-                                    "latest request directly "
-                                    "with useful text."
-                                ),
-
+                            "content": (
+                                "Answer the user's "
+                                "latest request directly "
+                                "with useful text."
+                            ),
                         }
-
                     ]
                 ),
             )
@@ -2936,7 +3101,6 @@ def generate_ai_answer(
 
         model_messages.append(
             {
-
                 "role":
                     "tool",
 
@@ -2949,7 +3113,6 @@ def generate_ai_answer(
                         ensure_ascii=False,
                         default=str,
                     ),
-
             }
         )
 
@@ -3052,17 +3215,13 @@ def chat_endpoint(
         )
 
         model_messages = [
-
             {
-
                 "role":
                     "system",
 
                 "content":
                     SYSTEM_PROMPT,
-
             }
-
         ]
 
         for item in (
@@ -3076,25 +3235,21 @@ def chat_endpoint(
 
                 model_messages.append(
                     {
-
                         "role":
                             item.role,
 
                         "content":
                             item.content,
-
                     }
                 )
 
         model_messages.append(
             {
-
                 "role":
                     "user",
 
                 "content":
                     model_message,
-
             }
         )
 
@@ -3116,8 +3271,7 @@ def chat_endpoint(
 
             if (
                 "429" in error_text
-                or
-                "Rate limit"
+                or "Rate limit"
                 in error_text
             ):
 
@@ -3126,10 +3280,7 @@ def chat_endpoint(
                     "Please try again later."
                 )
 
-            elif (
-                "401"
-                in error_text
-            ):
+            elif "401" in error_text:
 
                 answer = (
                     "OpenRouter "
@@ -3162,8 +3313,7 @@ def chat_endpoint(
         if (
             current_chat.title
             == "New Chat"
-            and
-            visible_message
+            and visible_message
         ):
 
             current_chat.title = (
@@ -3173,13 +3323,11 @@ def chat_endpoint(
         db.commit()
 
         return {
-
             "answer":
                 answer,
 
             "title":
                 current_chat.title,
-
         }
 
     except HTTPException:
@@ -3196,13 +3344,11 @@ def chat_endpoint(
         )
 
         return {
-
             "answer":
                 (
                     "Server error: "
                     + str(e)
                 )
-
         }
 
     finally:
@@ -3230,25 +3376,21 @@ def health():
         )
 
         return {
-
             "status":
                 "ok",
 
             "database":
                 "connected",
-
         }
 
     except Exception as e:
 
         return {
-
             "status":
                 "error",
 
             "database":
                 str(e),
-
         }
 
     finally:
