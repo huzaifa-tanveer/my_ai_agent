@@ -8,6 +8,7 @@ import secrets
 import hashlib
 import hmac
 import smtplib
+import shutil
 
 from datetime import datetime, timedelta
 from typing import Optional
@@ -60,7 +61,10 @@ from sqlalchemy.orm import (
 load_dotenv(override=True)
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-JWT_SECRET = os.getenv("JWT_SECRET", "change-this-secret")
+JWT_SECRET = os.getenv(
+    "JWT_SECRET",
+    "change-this-secret",
+)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 OPENROUTER_MODEL = os.getenv(
@@ -69,7 +73,12 @@ OPENROUTER_MODEL = os.getenv(
 )
 
 SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_PORT = int(
+    os.getenv(
+        "SMTP_PORT",
+        "587",
+    )
+)
 SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 SMTP_FROM = os.getenv(
@@ -78,12 +87,18 @@ SMTP_FROM = os.getenv(
 )
 
 SMTP_USE_TLS = (
-    os.getenv("SMTP_USE_TLS", "true").lower()
+    os.getenv(
+        "SMTP_USE_TLS",
+        "true",
+    ).lower()
     == "true"
 )
 
 SMTP_USE_SSL = (
-    os.getenv("SMTP_USE_SSL", "false").lower()
+    os.getenv(
+        "SMTP_USE_SSL",
+        "false",
+    ).lower()
     == "true"
 )
 
@@ -133,7 +148,9 @@ app.add_middleware(
 # =========================================================
 
 client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
+    base_url=(
+        "https://openrouter.ai/api/v1"
+    ),
     api_key=OPENROUTER_API_KEY.strip(),
 )
 
@@ -147,13 +164,11 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
-
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
 )
-
 
 Base = declarative_base()
 
@@ -334,7 +349,9 @@ class UserMemory(Base):
 
 class PasswordResetCode(Base):
 
-    __tablename__ = "password_reset_codes"
+    __tablename__ = (
+        "password_reset_codes"
+    )
 
     id = Column(
         Integer,
@@ -377,7 +394,9 @@ class PasswordResetCode(Base):
 
 class EmailVerificationCode(Base):
 
-    __tablename__ = "email_verification_codes"
+    __tablename__ = (
+        "email_verification_codes"
+    )
 
     id = Column(
         Integer,
@@ -418,17 +437,13 @@ class EmailVerificationCode(Base):
     )
 
 
-# =========================================================
-# CREATE TABLES
-# =========================================================
-
 Base.metadata.create_all(
     bind=engine
 )
 
 
 # =========================================================
-# SAFE DATABASE MIGRATION
+# DATABASE MIGRATION
 # =========================================================
 
 with engine.begin() as connection:
@@ -475,7 +490,6 @@ UPLOAD_DIR = os.getenv(
     "uploads",
 )
 
-
 os.makedirs(
     UPLOAD_DIR,
     exist_ok=True,
@@ -483,10 +497,12 @@ os.makedirs(
 
 
 # =========================================================
-# EMAIL HELPERS
+# HELPERS
 # =========================================================
 
-def normalize_email(email: str):
+def normalize_email(
+    email: str,
+):
 
     return (
         email
@@ -495,7 +511,9 @@ def normalize_email(email: str):
     )
 
 
-def valid_email(email: str):
+def valid_email(
+    email: str,
+):
 
     pattern = (
         r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
@@ -529,13 +547,18 @@ def hash_verification_code(
 ):
 
     value = (
-        f"verify:{email}:{code}:{JWT_SECRET}"
+        f"verify:{email}:{code}:"
+        f"{JWT_SECRET}"
     )
 
     return hashlib.sha256(
         value.encode()
     ).hexdigest()
 
+
+# =========================================================
+# EMAIL
+# =========================================================
 
 def send_email_message(
     email,
@@ -611,11 +634,13 @@ def send_reset_email(
     code,
 ):
 
-    subject = (
-        "My AI Agent - Password Reset Code"
-    )
-
-    body = f"""
+    send_email_message(
+        email,
+        (
+            "My AI Agent - "
+            "Password Reset Code"
+        ),
+        f"""
 Hello,
 
 Your password reset code is:
@@ -628,12 +653,7 @@ If you did not request a password reset,
 you can ignore this email.
 
 My AI Agent
-"""
-
-    send_email_message(
-        email,
-        subject,
-        body,
+""",
     )
 
 
@@ -642,11 +662,13 @@ def send_verification_email(
     code,
 ):
 
-    subject = (
-        "My AI Agent - Verify Your Email"
-    )
-
-    body = f"""
+    send_email_message(
+        email,
+        (
+            "My AI Agent - "
+            "Verify Your Email"
+        ),
+        f"""
 Hello,
 
 Welcome to My AI Agent.
@@ -661,12 +683,7 @@ If you did not create this account,
 you can ignore this email.
 
 My AI Agent
-"""
-
-    send_email_message(
-        email,
-        subject,
-        body,
+""",
     )
 
 
@@ -710,7 +727,9 @@ def get_current_user(
 
         raise HTTPException(
             status_code=401,
-            detail="Invalid authentication",
+            detail=(
+                "Invalid authentication"
+            ),
         )
 
     token = authorization.split(
@@ -726,9 +745,9 @@ def get_current_user(
             algorithms=["HS256"],
         )
 
-        username = payload[
-            "username"
-        ]
+        username = (
+            payload["username"]
+        )
 
     except Exception:
 
@@ -757,7 +776,8 @@ def get_current_user(
             raise HTTPException(
                 status_code=401,
                 detail=(
-                    "User account no longer exists"
+                    "User account no "
+                    "longer exists"
                 ),
             )
 
@@ -773,59 +793,59 @@ def get_current_user(
 # =========================================================
 
 class RegisterRequest(BaseModel):
-
     username: str
     email: str
     password: str
 
 
 class LoginRequest(BaseModel):
-
     username: str
     password: str
 
 
 class ForgotPasswordRequest(BaseModel):
-
     email: str
 
 
 class ResetPasswordRequest(BaseModel):
-
     email: str
     code: str
     new_password: str
 
 
 class VerifyEmailRequest(BaseModel):
-
     email: str
     code: str
 
 
-class ResendVerificationRequest(BaseModel):
-
+class ResendVerificationRequest(
+    BaseModel
+):
     email: str
 
 
-class ChangePasswordRequest(BaseModel):
-
+class ChangePasswordRequest(
+    BaseModel
+):
     current_password: str
     new_password: str
 
 
-class DeleteAccountRequest(BaseModel):
-
+class DeleteAccountRequest(
+    BaseModel
+):
     password: str
 
 
 class CreateChatRequest(BaseModel):
-
     title: Optional[str] = "New Chat"
 
 
-class ChatRequest(BaseModel):
+class RenameChatRequest(BaseModel):
+    title: str
 
+
+class ChatRequest(BaseModel):
     chat_id: str
     message: str
     file_path: Optional[str] = None
@@ -861,7 +881,9 @@ def register(
 
         raise HTTPException(
             status_code=400,
-            detail="Invalid email address",
+            detail=(
+                "Invalid email address"
+            ),
         )
 
     if len(data.password) < 6:
@@ -874,34 +896,18 @@ def register(
             ),
         )
 
-    if not all([
-        SMTP_HOST,
-        SMTP_USER,
-        SMTP_PASSWORD,
-        SMTP_FROM,
-    ]):
-
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Email service is not configured."
-            ),
-        )
-
     db = SessionLocal()
 
     try:
 
-        existing_username = (
+        if (
             db.query(User)
             .filter(
                 User.username
                 == username
             )
             .first()
-        )
-
-        if existing_username:
+        ):
 
             raise HTTPException(
                 status_code=400,
@@ -910,16 +916,14 @@ def register(
                 ),
             )
 
-        existing_email = (
+        if (
             db.query(User)
             .filter(
                 User.email
                 == email
             )
             .first()
-        )
-
-        if existing_email:
+        ):
 
             raise HTTPException(
                 status_code=400,
@@ -943,10 +947,7 @@ def register(
             email_verified=False,
         )
 
-        db.add(
-            user
-        )
-
+        db.add(user)
         db.flush()
 
         code = str(
@@ -986,13 +987,13 @@ def register(
                 code,
             )
 
-        except Exception as email_error:
+        except Exception as error:
 
             db.rollback()
 
             print(
                 "VERIFICATION EMAIL ERROR:",
-                str(email_error),
+                str(error),
             )
 
             raise HTTPException(
@@ -1032,17 +1033,7 @@ def verify_email(
         data.email
     )
 
-    code = (
-        data.code
-        .strip()
-    )
-
-    if not valid_email(email):
-
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid email address",
-        )
+    code = data.code.strip()
 
     if (
         len(code) != 6
@@ -1063,8 +1054,7 @@ def verify_email(
         user = (
             db.query(User)
             .filter(
-                User.email
-                == email
+                User.email == email
             )
             .first()
         )
@@ -1097,10 +1087,12 @@ def verify_email(
                 EmailVerificationCode
             )
             .filter(
-                EmailVerificationCode.username
+                EmailVerificationCode
+                .username
                 == user.username,
 
-                EmailVerificationCode.used
+                EmailVerificationCode
+                .used
                 == False,
             )
             .order_by(
@@ -1185,7 +1177,7 @@ def verify_email(
 
 
 # =========================================================
-# RESEND VERIFICATION CODE
+# RESEND VERIFICATION
 # =========================================================
 
 @app.post(
@@ -1199,27 +1191,6 @@ def resend_verification_code(
         data.email
     )
 
-    if not valid_email(email):
-
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid email address",
-        )
-
-    if not all([
-        SMTP_HOST,
-        SMTP_USER,
-        SMTP_PASSWORD,
-        SMTP_FROM,
-    ]):
-
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Email service is not configured."
-            ),
-        )
-
     db = SessionLocal()
 
     try:
@@ -1227,8 +1198,7 @@ def resend_verification_code(
         user = (
             db.query(User)
             .filter(
-                User.email
-                == email
+                User.email == email
             )
             .first()
         )
@@ -1236,12 +1206,11 @@ def resend_verification_code(
         if not user:
 
             return {
-                "message":
-                    (
-                        "If the account exists, "
-                        "a verification code "
-                        "has been sent."
-                    )
+                "message": (
+                    "If the account exists, "
+                    "a verification code "
+                    "has been sent."
+                )
             }
 
         if user.email_verified:
@@ -1256,17 +1225,18 @@ def resend_verification_code(
                 EmailVerificationCode
             )
             .filter(
-                EmailVerificationCode.username
+                EmailVerificationCode
+                .username
                 == user.username,
 
-                EmailVerificationCode.used
+                EmailVerificationCode
+                .used
                 == False,
             )
             .all()
         )
 
         for item in old_codes:
-
             item.used = True
 
         code = str(
@@ -1299,29 +1269,10 @@ def resend_verification_code(
             verification
         )
 
-        try:
-
-            send_verification_email(
-                email,
-                code,
-            )
-
-        except Exception as email_error:
-
-            db.rollback()
-
-            print(
-                "RESEND VERIFICATION ERROR:",
-                str(email_error),
-            )
-
-            raise HTTPException(
-                status_code=500,
-                detail=(
-                    "Could not send "
-                    "verification email."
-                ),
-            )
+        send_verification_email(
+            email,
+            code,
+        )
 
         db.commit()
 
@@ -1406,7 +1357,6 @@ def login(
                 create_token(
                     username
                 ),
-
             "username":
                 username,
         }
@@ -1422,7 +1372,8 @@ def login(
 
 @app.get("/profile")
 def get_profile(
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -1442,13 +1393,6 @@ def get_profile(
             .first()
         )
 
-        if not user:
-
-            raise HTTPException(
-                status_code=404,
-                detail="User not found",
-            )
-
         return {
             "username":
                 user.username,
@@ -1461,7 +1405,8 @@ def get_profile(
 
             "created_at":
                 (
-                    user.created_at.isoformat()
+                    user.created_at
+                    .isoformat()
                     if user.created_at
                     else None
                 ),
@@ -1479,7 +1424,8 @@ def get_profile(
 @app.post("/change-password")
 def change_password(
     data: ChangePasswordRequest,
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -1511,13 +1457,6 @@ def change_password(
             .first()
         )
 
-        if not user:
-
-            raise HTTPException(
-                status_code=404,
-                detail="User not found",
-            )
-
         valid = bcrypt.checkpw(
             data.current_password.encode(),
             user.password_hash.encode(),
@@ -1528,26 +1467,26 @@ def change_password(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Current password is incorrect"
+                    "Current password "
+                    "is incorrect"
                 ),
             )
 
-        same_password = bcrypt.checkpw(
+        if bcrypt.checkpw(
             data.new_password.encode(),
             user.password_hash.encode(),
-        )
-
-        if same_password:
+        ):
 
             raise HTTPException(
                 status_code=400,
                 detail=(
                     "New password must be "
-                    "different from current password"
+                    "different from current "
+                    "password"
                 ),
             )
 
-        new_hash = (
+        user.password_hash = (
             bcrypt.hashpw(
                 data.new_password.encode(),
                 bcrypt.gensalt(),
@@ -1555,15 +1494,14 @@ def change_password(
             .decode()
         )
 
-        user.password_hash = (
-            new_hash
-        )
-
         db.commit()
 
         return {
             "message":
-                "Password changed successfully."
+                (
+                    "Password changed "
+                    "successfully."
+                )
         }
 
     finally:
@@ -1578,7 +1516,8 @@ def change_password(
 @app.delete("/account")
 def delete_account(
     data: DeleteAccountRequest,
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -1598,13 +1537,6 @@ def delete_account(
             .first()
         )
 
-        if not user:
-
-            raise HTTPException(
-                status_code=404,
-                detail="User not found",
-            )
-
         valid = bcrypt.checkpw(
             data.password.encode(),
             user.password_hash.encode(),
@@ -1618,8 +1550,6 @@ def delete_account(
                     "Password is incorrect"
                 ),
             )
-
-        # Extra cleanup for safety.
 
         db.query(
             PasswordResetCode
@@ -1648,66 +1578,41 @@ def delete_account(
             synchronize_session=False
         )
 
-        # Chat messages are deleted through
-        # the Chat -> Message relationship.
-
         db.delete(
             user
         )
 
         db.commit()
 
-        # Remove locally uploaded user files,
-        # when they exist on this instance.
-
-        user_upload_folder = os.path.join(
+        user_folder = os.path.join(
             UPLOAD_DIR,
             username,
         )
 
         if os.path.isdir(
-            user_upload_folder
+            user_folder
         ):
-
-            import shutil
 
             try:
 
                 shutil.rmtree(
-                    user_upload_folder
+                    user_folder
                 )
 
-            except Exception as file_error:
+            except Exception as error:
 
                 print(
-                    "ACCOUNT FILE CLEANUP ERROR:",
-                    str(file_error),
+                    "FILE CLEANUP ERROR:",
+                    str(error),
                 )
 
         return {
             "message":
-                "Account deleted successfully."
+                (
+                    "Account deleted "
+                    "successfully."
+                )
         }
-
-    except HTTPException:
-
-        raise
-
-    except Exception as error:
-
-        db.rollback()
-
-        print(
-            "DELETE ACCOUNT ERROR:",
-            str(error),
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                "Could not delete account."
-            ),
-        )
 
     finally:
 
@@ -1727,29 +1632,6 @@ def forgot_password(
         data.email
     )
 
-    if not valid_email(
-        email
-    ):
-
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid email address",
-        )
-
-    if not all([
-        SMTP_HOST,
-        SMTP_USER,
-        SMTP_PASSWORD,
-        SMTP_FROM,
-    ]):
-
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Email service is not configured."
-            ),
-        )
-
     db = SessionLocal()
 
     try:
@@ -1757,8 +1639,7 @@ def forgot_password(
         user = (
             db.query(User)
             .filter(
-                User.email
-                == email
+                User.email == email
             )
             .first()
         )
@@ -1766,12 +1647,11 @@ def forgot_password(
         if not user:
 
             return {
-                "message":
-                    (
-                        "If this email is "
-                        "registered, a reset "
-                        "code has been sent."
-                    )
+                "message": (
+                    "If this email is "
+                    "registered, a reset "
+                    "code has been sent."
+                )
             }
 
         old_codes = (
@@ -1788,9 +1668,8 @@ def forgot_password(
             .all()
         )
 
-        for old_code in old_codes:
-
-            old_code.used = True
+        for item in old_codes:
+            item.used = True
 
         code = str(
             secrets.randbelow(
@@ -1799,17 +1678,15 @@ def forgot_password(
             + 100000
         )
 
-        code_hash = (
-            hash_reset_code(
-                email,
-                code,
-            )
-        )
-
-        reset_code = (
+        db.add(
             PasswordResetCode(
                 username=user.username,
-                code_hash=code_hash,
+                code_hash=(
+                    hash_reset_code(
+                        email,
+                        code,
+                    )
+                ),
                 expires_at=(
                     datetime.utcnow()
                     + timedelta(
@@ -1820,43 +1697,19 @@ def forgot_password(
             )
         )
 
-        db.add(
-            reset_code
+        send_reset_email(
+            email,
+            code,
         )
-
-        try:
-
-            send_reset_email(
-                email,
-                code,
-            )
-
-        except Exception as email_error:
-
-            db.rollback()
-
-            print(
-                "EMAIL ERROR:",
-                str(email_error),
-            )
-
-            raise HTTPException(
-                status_code=500,
-                detail=(
-                    "Could not send "
-                    "reset email."
-                ),
-            )
 
         db.commit()
 
         return {
-            "message":
-                (
-                    "If this email is "
-                    "registered, a reset "
-                    "code has been sent."
-                )
+            "message": (
+                "If this email is "
+                "registered, a reset "
+                "code has been sent."
+            )
         }
 
     finally:
@@ -1877,19 +1730,7 @@ def reset_password(
         data.email
     )
 
-    code = (
-        data.code
-        .strip()
-    )
-
-    if not valid_email(
-        email
-    ):
-
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid email address",
-        )
+    code = data.code.strip()
 
     if (
         len(code) != 6
@@ -1898,7 +1739,9 @@ def reset_password(
 
         raise HTTPException(
             status_code=400,
-            detail="Invalid reset code",
+            detail=(
+                "Invalid reset code"
+            ),
         )
 
     if len(
@@ -1920,8 +1763,7 @@ def reset_password(
         user = (
             db.query(User)
             .filter(
-                User.email
-                == email
+                User.email == email
             )
             .first()
         )
@@ -1971,7 +1813,6 @@ def reset_password(
         ):
 
             reset_record.used = True
-
             db.commit()
 
             raise HTTPException(
@@ -2001,7 +1842,7 @@ def reset_password(
                 ),
             )
 
-        new_hash = (
+        user.password_hash = (
             bcrypt.hashpw(
                 data.new_password.encode(),
                 bcrypt.gensalt(),
@@ -2009,21 +1850,16 @@ def reset_password(
             .decode()
         )
 
-        user.password_hash = (
-            new_hash
-        )
-
         reset_record.used = True
 
         db.commit()
 
         return {
-            "message":
-                (
-                    "Password reset "
-                    "successfully. "
-                    "You can now login."
-                )
+            "message": (
+                "Password reset "
+                "successfully. "
+                "You can now login."
+            )
         }
 
     finally:
@@ -2045,11 +1881,8 @@ def add_numbers(
 
 def get_current_datetime():
 
-    return (
-        datetime.now()
-        .strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+    return datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
     )
 
 
@@ -2067,30 +1900,20 @@ def web_search(
         return [
             {
                 "title":
-                    item.get(
-                        "title"
-                    ),
-
+                    item.get("title"),
                 "url":
-                    item.get(
-                        "href"
-                    ),
-
+                    item.get("href"),
                 "snippet":
-                    item.get(
-                        "body"
-                    ),
+                    item.get("body"),
             }
-
-            for item
-            in results
+            for item in results
         ]
 
-    except Exception as e:
+    except Exception as error:
 
         return (
             "Search error: "
-            + str(e)
+            + str(error)
         )
 
 
@@ -2109,9 +1932,7 @@ def save_user_memory(
     try:
 
         item = (
-            db.query(
-                UserMemory
-            )
+            db.query(UserMemory)
             .filter(
                 UserMemory.username
                 == username,
@@ -2138,8 +1959,8 @@ def save_user_memory(
                 UserMemory(
                     username=username,
                     memory_key=key,
-                    memory_value=str(
-                        value
+                    memory_value=(
+                        str(value)
                     ),
                 )
             )
@@ -2165,9 +1986,7 @@ def get_user_memory(
     try:
 
         item = (
-            db.query(
-                UserMemory
-            )
+            db.query(UserMemory)
             .filter(
                 UserMemory.username
                 == username,
@@ -2184,9 +2003,7 @@ def get_user_memory(
                 "No saved information found."
             )
 
-        return (
-            item.memory_value
-        )
+        return item.memory_value
 
     finally:
 
@@ -2204,10 +2021,7 @@ def read_text_file(
     if not os.path.exists(
         file_path
     ):
-
-        return (
-            "File not found."
-        )
+        return "File not found."
 
     try:
 
@@ -2217,19 +2031,15 @@ def read_text_file(
             encoding="utf-8",
         ) as file:
 
-            content = (
-                file.read()
-            )
+            content = file.read()
 
-        return (
-            content[:20000]
-        )
+        return content[:20000]
 
-    except Exception as e:
+    except Exception as error:
 
         return (
             "TXT error: "
-            + str(e)
+            + str(error)
         )
 
 
@@ -2240,10 +2050,7 @@ def read_csv_file(
     if not os.path.exists(
         file_path
     ):
-
-        return (
-            "File not found."
-        )
+        return "File not found."
 
     try:
 
@@ -2253,9 +2060,7 @@ def read_csv_file(
 
         return {
             "rows":
-                len(
-                    dataframe
-                ),
+                len(dataframe),
 
             "columns":
                 dataframe
@@ -2270,11 +2075,11 @@ def read_csv_file(
                 ),
         }
 
-    except Exception as e:
+    except Exception as error:
 
         return (
             "CSV error: "
-            + str(e)
+            + str(error)
         )
 
 
@@ -2285,10 +2090,7 @@ def read_pdf_file(
     if not os.path.exists(
         file_path
     ):
-
-        return (
-            "File not found."
-        )
+        return "File not found."
 
     try:
 
@@ -2298,7 +2100,7 @@ def read_pdf_file(
 
         content = ""
 
-        for page_number, page in enumerate(
+        for number, page in enumerate(
             reader.pages,
             start=1,
         ):
@@ -2311,7 +2113,7 @@ def read_pdf_file(
 
                 content += (
                     f"\n--- Page "
-                    f"{page_number} ---\n"
+                    f"{number} ---\n"
                     + page_text
                 )
 
@@ -2324,19 +2126,17 @@ def read_pdf_file(
 
         return {
             "pages":
-                len(
-                    reader.pages
-                ),
+                len(reader.pages),
 
             "content":
                 content[:30000],
         }
 
-    except Exception as e:
+    except Exception as error:
 
         return (
             "PDF error: "
-            + str(e)
+            + str(error)
         )
 
 
@@ -2348,9 +2148,7 @@ tools = [
 
     {
         "type": "function",
-
         "function": {
-
             "name":
                 "add_numbers",
 
@@ -2358,14 +2156,13 @@ tools = [
                 "Add two numbers.",
 
             "parameters": {
-                "type": "object",
+                "type":
+                    "object",
 
                 "properties": {
-
                     "a": {
                         "type": "number"
                     },
-
                     "b": {
                         "type": "number"
                     },
@@ -2381,14 +2178,15 @@ tools = [
 
     {
         "type": "function",
-
         "function": {
-
             "name":
                 "get_current_datetime",
 
             "description":
-                "Get current date and time.",
+                (
+                    "Get current "
+                    "date and time."
+                ),
 
             "parameters": {
                 "type": "object",
@@ -2399,23 +2197,21 @@ tools = [
 
     {
         "type": "function",
-
         "function": {
-
             "name":
                 "web_search",
 
             "description":
                 (
-                    "Search the web for "
-                    "current information."
+                    "Search the web "
+                    "for current information."
                 ),
 
             "parameters": {
-                "type": "object",
+                "type":
+                    "object",
 
                 "properties": {
-
                     "query": {
                         "type": "string"
                     },
@@ -2430,27 +2226,25 @@ tools = [
 
     {
         "type": "function",
-
         "function": {
-
             "name":
                 "save_user_memory",
 
             "description":
                 (
-                    "Save information the user "
-                    "explicitly asks to remember."
+                    "Save information "
+                    "the user explicitly "
+                    "asks to remember."
                 ),
 
             "parameters": {
-                "type": "object",
+                "type":
+                    "object",
 
                 "properties": {
-
                     "key": {
                         "type": "string"
                     },
-
                     "value": {
                         "type": "string"
                     },
@@ -2466,20 +2260,21 @@ tools = [
 
     {
         "type": "function",
-
         "function": {
-
             "name":
                 "get_user_memory",
 
             "description":
-                "Get saved user information.",
+                (
+                    "Get saved user "
+                    "information."
+                ),
 
             "parameters": {
-                "type": "object",
+                "type":
+                    "object",
 
                 "properties": {
-
                     "key": {
                         "type": "string"
                     },
@@ -2494,9 +2289,7 @@ tools = [
 
     {
         "type": "function",
-
         "function": {
-
             "name":
                 "read_text_file",
 
@@ -2504,10 +2297,10 @@ tools = [
                 "Read TXT file.",
 
             "parameters": {
-                "type": "object",
+                "type":
+                    "object",
 
                 "properties": {
-
                     "file_path": {
                         "type": "string"
                     },
@@ -2522,9 +2315,7 @@ tools = [
 
     {
         "type": "function",
-
         "function": {
-
             "name":
                 "read_csv_file",
 
@@ -2532,10 +2323,10 @@ tools = [
                 "Read CSV file.",
 
             "parameters": {
-                "type": "object",
+                "type":
+                    "object",
 
                 "properties": {
-
                     "file_path": {
                         "type": "string"
                     },
@@ -2550,9 +2341,7 @@ tools = [
 
     {
         "type": "function",
-
         "function": {
-
             "name":
                 "read_pdf_file",
 
@@ -2560,10 +2349,10 @@ tools = [
                 "Read PDF file.",
 
             "parameters": {
-                "type": "object",
+                "type":
+                    "object",
 
                 "properties": {
-
                     "file_path": {
                         "type": "string"
                     },
@@ -2617,7 +2406,8 @@ Do not return an empty response.
 @app.post("/chats")
 def create_chat(
     request: CreateChatRequest,
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -2628,33 +2418,20 @@ def create_chat(
 
     try:
 
-        user = (
-            db.query(User)
-            .filter(
-                User.username
-                == username
-            )
-            .first()
-        )
+        chat_id = uuid.uuid4().hex
 
-        if not user:
+        title = (
+            request.title
+            or "New Chat"
+        ).strip()
 
-            raise HTTPException(
-                status_code=401,
-                detail="User not found",
-            )
-
-        chat_id = (
-            uuid.uuid4().hex
-        )
+        if not title:
+            title = "New Chat"
 
         chat_object = Chat(
             chat_id=chat_id,
             username=username,
-            title=(
-                request.title
-                or "New Chat"
-            ),
+            title=title[:255],
         )
 
         db.add(
@@ -2678,7 +2455,8 @@ def create_chat(
 
 @app.get("/chats")
 def list_chats(
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -2724,7 +2502,8 @@ def list_chats(
 @app.get("/chats/{chat_id}")
 def get_chat(
     chat_id: str,
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -2777,10 +2556,100 @@ def get_chat(
         db.close()
 
 
-@app.delete("/chats/{chat_id}")
+# =========================================================
+# RENAME CHAT
+# =========================================================
+
+@app.patch(
+    "/chats/{chat_id}/title"
+)
+def rename_chat(
+    chat_id: str,
+    request: RenameChatRequest,
+    authorization: Optional[str]
+    = Header(None),
+):
+
+    username = get_current_user(
+        authorization
+    )
+
+    new_title = (
+        request.title
+        .strip()
+    )
+
+    if not new_title:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Chat title cannot be empty"
+            ),
+        )
+
+    if len(new_title) > 100:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Chat title must be "
+                "100 characters or less"
+            ),
+        )
+
+    db = SessionLocal()
+
+    try:
+
+        chat_object = (
+            db.query(Chat)
+            .filter(
+                Chat.chat_id
+                == chat_id,
+
+                Chat.username
+                == username,
+            )
+            .first()
+        )
+
+        if not chat_object:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Chat not found",
+            )
+
+        chat_object.title = (
+            new_title
+        )
+
+        db.commit()
+
+        return {
+            "success":
+                True,
+
+            "chat_id":
+                chat_object.chat_id,
+
+            "title":
+                chat_object.title,
+        }
+
+    finally:
+
+        db.close()
+
+
+@app.delete(
+    "/chats/{chat_id}"
+)
 def delete_chat(
     chat_id: str,
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -2803,16 +2672,22 @@ def delete_chat(
             .first()
         )
 
-        if chat_object:
+        if not chat_object:
 
-            db.delete(
-                chat_object
+            raise HTTPException(
+                status_code=404,
+                detail="Chat not found",
             )
 
-            db.commit()
+        db.delete(
+            chat_object
+        )
+
+        db.commit()
 
         return {
-            "success": True
+            "success":
+                True
         }
 
     finally:
@@ -2827,7 +2702,8 @@ def delete_chat(
 @app.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -3020,7 +2896,7 @@ def generate_ai_answer(
 
             return answer
 
-        fallback_response = (
+        fallback = (
             client.chat
             .completions
             .create(
@@ -3030,13 +2906,16 @@ def generate_ai_answer(
                     model_messages
                     + [
                         {
-                            "role": "system",
+                            "role":
+                                "system",
 
-                            "content": (
-                                "Answer the user's "
-                                "latest request directly "
-                                "with useful text."
-                            ),
+                            "content":
+                                (
+                                    "Answer the "
+                                    "user's latest "
+                                    "request directly "
+                                    "with useful text."
+                                ),
                         }
                     ]
                 ),
@@ -3044,7 +2923,7 @@ def generate_ai_answer(
         )
 
         return (
-            fallback_response
+            fallback
             .choices[0]
             .message
             .content
@@ -3092,11 +2971,11 @@ def generate_ai_answer(
                 arguments,
             )
 
-        except Exception as e:
+        except Exception as error:
 
             result = (
                 "Tool error: "
-                + str(e)
+                + str(error)
             )
 
         model_messages.append(
@@ -3148,7 +3027,8 @@ def generate_ai_answer(
 @app.post("/chat")
 def chat_endpoint(
     request: ChatRequest,
-    authorization: Optional[str] = Header(None),
+    authorization: Optional[str]
+    = Header(None),
 ):
 
     username = get_current_user(
@@ -3255,14 +3135,18 @@ def chat_endpoint(
 
         try:
 
-            answer = generate_ai_answer(
-                username,
-                model_messages,
+            answer = (
+                generate_ai_answer(
+                    username,
+                    model_messages,
+                )
             )
 
-        except Exception as e:
+        except Exception as error:
 
-            error_text = str(e)
+            error_text = str(
+                error
+            )
 
             print(
                 "OPENROUTER ERROR:",
@@ -3271,7 +3155,8 @@ def chat_endpoint(
 
             if (
                 "429" in error_text
-                or "Rate limit"
+                or
+                "Rate limit"
                 in error_text
             ):
 
@@ -3280,7 +3165,10 @@ def chat_endpoint(
                     "Please try again later."
                 )
 
-            elif "401" in error_text:
+            elif (
+                "401"
+                in error_text
+            ):
 
                 answer = (
                     "OpenRouter "
@@ -3334,20 +3222,20 @@ def chat_endpoint(
 
         raise
 
-    except Exception as e:
+    except Exception as error:
 
         db.rollback()
 
         print(
             "CHAT ERROR:",
-            str(e),
+            str(error),
         )
 
         return {
             "answer":
                 (
                     "Server error: "
-                    + str(e)
+                    + str(error)
                 )
         }
 
@@ -3383,20 +3271,19 @@ def health():
                 "connected",
         }
 
-    except Exception as e:
+    except Exception as error:
 
         return {
             "status":
                 "error",
 
             "database":
-                str(e),
+                str(error),
         }
 
     finally:
 
         if db:
-
             db.close()
 
 
