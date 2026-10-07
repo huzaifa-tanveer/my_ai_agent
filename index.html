@@ -903,6 +903,473 @@ input {
 
 
 /* =====================================
+   RAG DOCUMENTS
+===================================== */
+
+.rag-card {
+    background: var(--surface);
+    color: var(--text);
+    width: 100%;
+    max-width: 720px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 18px;
+    padding: 26px;
+    box-shadow: var(--shadow);
+}
+
+.rag-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.rag-section {
+    padding: 16px 0;
+    border-top: 1px solid var(--border-light);
+}
+
+.rag-section:first-of-type {
+    border-top: none;
+}
+
+.rag-upload-row,
+.rag-ask-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.rag-upload-row input[type="file"],
+#ragQuestion {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.rag-primary-btn {
+    border: none;
+    border-radius: 9px;
+    padding: 11px 14px;
+    background: var(--primary);
+    color: var(--primary-text);
+    white-space: nowrap;
+}
+
+.rag-primary-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.rag-documents {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.rag-document-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    background: var(--surface-2);
+}
+
+.rag-document-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.rag-document-name {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rag-document-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.rag-select-btn,
+.rag-delete-btn {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 9px;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.rag-delete-btn {
+    color: var(--danger);
+}
+
+.rag-selected {
+    border-color: #3b82f6;
+}
+
+.rag-selected-label {
+    color: #3b82f6;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+#ragAnswer {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 10px;
+    background: var(--assistant-message);
+    line-height: 1.55;
+    min-height: 48px;
+}
+
+#ragSources {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.rag-source-item {
+    margin-top: 5px;
+}
+
+#ragMessage {
+    min-height: 18px;
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+@media(max-width: 600px) {
+    .rag-card {
+        padding: 18px;
+    }
+
+    .rag-upload-row,
+    .rag-ask-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .rag-document-item {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+}
+
+
+/* =====================================
+   RAG DOCUMENTS
+===================================== */
+
+function setRagMessage(message, success = false) {
+    const element = document.getElementById("ragMessage");
+    if (!element) return;
+    element.textContent = message || "";
+    element.style.color = success ? "#16a34a" : "#ef4444";
+}
+
+
+async function openRagPanel() {
+    closeSidebarIfMobile();
+
+    document
+        .getElementById("ragModal")
+        .classList.remove("hidden");
+
+    setRagMessage("");
+
+    try {
+        await loadRagDocuments();
+    } catch (error) {
+        setRagMessage(error.message);
+    }
+}
+
+
+function closeRagPanel() {
+    document
+        .getElementById("ragModal")
+        .classList.add("hidden");
+}
+
+
+async function loadRagDocuments() {
+    const response = await request("/rag/documents");
+    const data = await parseResponse(response);
+
+    ragDocuments = data.documents || [];
+
+    if (
+        selectedRagDocumentId
+        && !ragDocuments.some(
+            item => item.document_id === selectedRagDocumentId
+        )
+    ) {
+        selectedRagDocumentId = null;
+    }
+
+    renderRagDocuments();
+}
+
+
+function renderRagDocuments() {
+    const container = document.getElementById("ragDocuments");
+    const selectedLabel = document.getElementById("ragSelectedLabel");
+
+    container.innerHTML = "";
+
+    const allItem = document.createElement("div");
+    allItem.className =
+        "rag-document-item"
+        + (!selectedRagDocumentId ? " rag-selected" : "");
+
+    const allInfo = document.createElement("div");
+    allInfo.className = "rag-document-info";
+    allInfo.innerHTML = `
+        <div class="rag-document-name">📚 All Documents</div>
+        <div class="rag-document-meta">Search across your complete document library</div>
+    `;
+
+    const allButton = document.createElement("button");
+    allButton.className = "rag-select-btn";
+    allButton.textContent = !selectedRagDocumentId ? "Selected" : "Select";
+    allButton.onclick = () => selectRagDocument(null);
+
+    allItem.appendChild(allInfo);
+    allItem.appendChild(allButton);
+    container.appendChild(allItem);
+
+    if (!ragDocuments.length) {
+        const empty = document.createElement("div");
+        empty.style.color = "var(--muted)";
+        empty.style.fontSize = "13px";
+        empty.style.padding = "8px 2px";
+        empty.textContent = "No RAG documents uploaded yet.";
+        container.appendChild(empty);
+        selectedLabel.textContent = "Searching all documents";
+        return;
+    }
+
+    ragDocuments.forEach(documentItem => {
+        const item = document.createElement("div");
+        const isSelected = documentItem.document_id === selectedRagDocumentId;
+        item.className = "rag-document-item" + (isSelected ? " rag-selected" : "");
+
+        const info = document.createElement("div");
+        info.className = "rag-document-info";
+
+        const name = document.createElement("div");
+        name.className = "rag-document-name";
+        name.textContent = "📄 " + (documentItem.filename || "Document");
+
+        const meta = document.createElement("div");
+        meta.className = "rag-document-meta";
+        meta.textContent =
+            String(documentItem.file_type || "file").toUpperCase()
+            + " • "
+            + (documentItem.chunks || 0)
+            + " chunks";
+
+        info.appendChild(name);
+        info.appendChild(meta);
+
+        const selectButton = document.createElement("button");
+        selectButton.className = "rag-select-btn";
+        selectButton.textContent = isSelected ? "Selected" : "Select";
+        selectButton.onclick = () => selectRagDocument(documentItem.document_id);
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "rag-delete-btn";
+        deleteButton.textContent = "Delete";
+        deleteButton.onclick = () => deleteRagDocument(documentItem.document_id, documentItem.filename);
+
+        item.appendChild(info);
+        item.appendChild(selectButton);
+        item.appendChild(deleteButton);
+        container.appendChild(item);
+    });
+
+    const selected = ragDocuments.find(
+        item => item.document_id === selectedRagDocumentId
+    );
+
+    selectedLabel.textContent = selected
+        ? "Selected: " + selected.filename
+        : "Searching all documents";
+}
+
+
+function selectRagDocument(documentId) {
+    selectedRagDocumentId = documentId;
+    renderRagDocuments();
+
+    document.getElementById("ragAnswer").textContent =
+        "Your document-based answer will appear here.";
+    document.getElementById("ragSources").innerHTML = "";
+}
+
+
+async function uploadRagDocument() {
+    const input = document.getElementById("ragFileInput");
+    const button = document.getElementById("ragUploadBtn");
+    const file = input.files[0];
+
+    if (!file) {
+        setRagMessage("Please choose a TXT, CSV or PDF document.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    button.disabled = true;
+    setRagMessage("Uploading and indexing document...", true);
+
+    try {
+        const response = await request("/rag/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await parseResponse(response);
+
+        input.value = "";
+        selectedRagDocumentId = data.document_id || null;
+        await loadRagDocuments();
+
+        setRagMessage(
+            "Document indexed successfully ("
+            + (data.chunks || 0)
+            + " chunks).",
+            true
+        );
+    } catch (error) {
+        setRagMessage(error.message);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+async function deleteRagDocument(documentId, filename) {
+    const confirmed = confirm(
+        "Delete RAG document " + (filename || "this document") + "?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await request(
+            "/rag/documents/" + encodeURIComponent(documentId),
+            { method: "DELETE" }
+        );
+
+        await parseResponse(response);
+
+        if (selectedRagDocumentId === documentId) {
+            selectedRagDocumentId = null;
+        }
+
+        await loadRagDocuments();
+        document.getElementById("ragAnswer").textContent =
+            "Your document-based answer will appear here.";
+        document.getElementById("ragSources").innerHTML = "";
+        setRagMessage("Document deleted.", true);
+    } catch (error) {
+        setRagMessage(error.message);
+    }
+}
+
+
+async function askRagQuestion() {
+    const input = document.getElementById("ragQuestion");
+    const button = document.getElementById("ragAskBtn");
+    const answerBox = document.getElementById("ragAnswer");
+    const sourcesBox = document.getElementById("ragSources");
+    const question = input.value.trim();
+
+    if (!question) {
+        setRagMessage("Please enter a question.");
+        return;
+    }
+
+    button.disabled = true;
+    setRagMessage("Searching relevant document chunks...", true);
+    answerBox.textContent = "Thinking...";
+    sourcesBox.innerHTML = "";
+
+    try {
+        const response = await request("/rag/ask", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                question: question,
+                document_id: selectedRagDocumentId,
+                top_k: 5
+            })
+        });
+
+        const data = await parseResponse(response);
+
+        answerBox.innerHTML = marked.parse(data.answer || "No answer returned.");
+
+        const sources = data.sources || [];
+        if (!sources.length) {
+            sourcesBox.textContent = "No relevant source chunks found.";
+        } else {
+            const heading = document.createElement("strong");
+            heading.textContent = "Sources";
+            sourcesBox.appendChild(heading);
+
+            sources.forEach(source => {
+                const item = document.createElement("div");
+                item.className = "rag-source-item";
+                item.textContent =
+                    "• "
+                    + source.filename
+                    + " — chunk "
+                    + source.chunk
+                    + " (score "
+                    + source.score
+                    + ")";
+                sourcesBox.appendChild(item);
+            });
+        }
+
+        setRagMessage("Answer generated from your documents.", true);
+    } catch (error) {
+        answerBox.textContent = "Could not generate a document answer.";
+        setRagMessage(error.message);
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+document
+    .getElementById("ragQuestion")
+    .addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            askRagQuestion();
+        }
+    });
+
+
+/* =====================================
    SETTINGS
 ===================================== */
 
@@ -1515,6 +1982,14 @@ input {
 
 
 <button
+    class="settings-btn"
+    onclick="openRagPanel()"
+>
+    📚 Documents / RAG
+</button>
+
+
+<button
     class="theme-btn"
     id="themeButton"
     onclick="toggleTheme()"
@@ -1661,6 +2136,79 @@ input {
 </main>
 
 </section>
+
+
+<!-- RAG DOCUMENTS -->
+
+<div
+    id="ragModal"
+    class="modal-overlay hidden"
+>
+
+<div class="rag-card">
+
+<div class="rag-header">
+<h2>📚 Documents / RAG</h2>
+<button
+    class="close-btn"
+    onclick="closeRagPanel()"
+>×</button>
+</div>
+
+<div class="rag-section">
+<h3>Upload Knowledge Document</h3>
+<p style="color:var(--muted);font-size:13px;margin:8px 0 12px;">
+    Upload TXT, CSV or text-based PDF. The document will be stored in your private RAG library.
+</p>
+<div class="rag-upload-row">
+<input
+    id="ragFileInput"
+    type="file"
+    accept=".txt,.csv,.pdf"
+>
+<button
+    id="ragUploadBtn"
+    class="rag-primary-btn"
+    onclick="uploadRagDocument()"
+>
+    Upload
+</button>
+</div>
+<div id="ragMessage"></div>
+</div>
+
+<div class="rag-section">
+<h3>Your Documents</h3>
+<div id="ragSelectedLabel" class="rag-selected-label">Searching all documents</div>
+<div id="ragDocuments" class="rag-documents">
+    <div style="color:var(--muted);font-size:13px;">Loading documents...</div>
+</div>
+</div>
+
+<div class="rag-section">
+<h3>Ask Your Documents</h3>
+<p style="color:var(--muted);font-size:13px;margin:8px 0 12px;">
+    Select one document above, or keep “all documents” selected.
+</p>
+<div class="rag-ask-row">
+<input
+    id="ragQuestion"
+    placeholder="Ask a question about your documents..."
+>
+<button
+    id="ragAskBtn"
+    class="rag-primary-btn"
+    onclick="askRagQuestion()"
+>
+    Ask
+</button>
+</div>
+<div id="ragAnswer">Your document-based answer will appear here.</div>
+<div id="ragSources"></div>
+</div>
+
+</div>
+</div>
 
 
 <!-- SETTINGS -->
@@ -1872,6 +2420,9 @@ let allChats = [];
 let activeController = null;
 
 let isGenerating = false;
+
+let ragDocuments = [];
+let selectedRagDocumentId = null;
 
 
 /* =====================================
@@ -5275,6 +5826,9 @@ function logout(
 
 
     closeSettings();
+
+
+    closeRagPanel();
 
 
     closeMobileSidebar();
