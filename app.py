@@ -21,6 +21,13 @@ import smtplib
 import shutil
 import io
 
+import json
+
+from typing import Optional
+
+from fastapi import Header, HTTPException
+
+from fastapi.responses import StreamingResponse
 
 
 from datetime import datetime, timedelta
@@ -6940,4 +6947,364 @@ def frontend():
 
         "index.html"
 
+    )  
+    
+    # =========================================================
+# REAL-TIME AI CHAT STREAMING
+# =========================================================
+
+@app.post("/chat/stream")
+def chat_stream_endpoint(
+    request: ChatRequest,
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+
+    # Validate ownership before starting the stream.
+    db = SessionLocal()
+
+    try:
+        current_chat = (
+            db.query(Chat)
+            .filter(
+                Chat.chat_id == request.chat_id,
+                Chat.username == username,
+            )
+            .first()
+        )
+
+        if not current_chat:
+            raise HTTPException(
+                status_code=404,
+                detail="Chat not found",
+            )
+
+    finally:
+        db.close()
+
+    visible_message = request.message.strip()
+
+    if not visible_message:
+        visible_message = (
+            "Please analyze the uploaded file."
+        )
+
+    model_message = visible_message
+
+    if request.file_path:
+        model_message += (
+            "\n\nUploaded file path: "
+            + request.file_path
+            + "\nRead this file before answering."
+        )
+
+    def event_stream():
+
+        stream_db = SessionLocal()
+
+        stream = None
+
+        completed = False
+
+        try:
+
+            current_chat = (
+                stream_db.query(Chat)
+                .filter(
+                    Chat.chat_id == request.chat_id,
+                    Chat.username == username,
+                )
+                .first()
+            )
+
+            if not current_chat:
+
+                yield (
+                    "data: "
+                    + json.dumps({
+                        "type": "error",
+                        "message": "Chat not found",
+                    })
+                    + "\n\n"
+                )
+
+                return
+
+            previous_messages = (
+                stream_db.query(Message)
+                .filter(
+                    Message.chat_id == request.chat_id
+                )
+                .order_by(Message.id.asc())
+                .all()
+            )
+
+            model_messages = [
+                {
+                    "role": "system",
+                    "content": SYSTEM_PROMPT,
+                }
+            ]
+
+            for item in previous_messages:
+
+                if item.role in (
+                    "user",
+                    "assistant",
+                ):
+
+                    model_messages.append({
+                        "role": item.role,
+                        "content": item.content,
+                    })
+
+            model_messages.append({
+                "role": "user",
+                "content": model_message,
+            })
+
+            # ---------------------------------
+            # STEP 1: CHECK WHETHER TOOLS
+            # ARE REQUIRED
+            # ---------------------------------
+
+            initial_response = (
+                client.chat.completions.create(
+                    model=OPENROUTER_MODEL,
+                    messages=model_messages,
+                    tools=tools,
+                    tool_choice="auto",
+                )
+            )
+
+            assistant_message = (
+                initial_response.choices[0].message
+            )
+
+            tool_calls = (
+                assistant_message.tool_calls or []
+            )
+
+            # ---------------------------------
+            # STEP 2: EXECUTE TOOLS
+            # ---------------------------------
+
+            if tool_calls:
+
+                model_messages.append(
+                    assistant_message
+                )
+
+                for tool_call in tool_calls:
+
+                    tool_name = (
+                        tool_call.function.name
+                    )
+
+                    try:
+
+                        arguments = json.loads(
+                            tool_call.function.arguments
+                        )
+
+                    except Exception:
+
+                        arguments = {}
+
+                    try:
+
+                        result = execute_tool(
+                            username,
+                            tool_name,
+                            arguments,
+                        )
+
+                    except Exception as error:
+
+                        result = (
+                            "Tool error: "
+                            + str(error)
+                        )
+
+                    model_messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps(
+                            result,
+                            ensure_ascii=False,
+                            default=str,
+                        ),
+                    })
+
+            # ---------------------------------
+            # STEP 3: STREAM THE FINAL ANSWER
+            # ---------------------------------
+
+            yield (
+                "data: "
+                + json.dumps({
+                    "type": "start",
+                })
+                + "\n\n"
+            )
+
+            # The final request does not pass
+            # tools again, preventing repeated
+            # tool calls or an empty tool response.
+
+            stream = (
+                client.chat.completions.create(
+                    model=OPENROUTER_MODEL,
+                    messages=model_messages,
+                    stream=True,
+                )
+            )
+
+            answer_parts = []
+
+            for chunk in stream:
+
+                if not chunk.choices:
+                    continue
+
+                delta = (
+                    chunk.choices[0]
+                    .delta
+                    .content
+                )
+
+                if not delta:
+                    continue
+
+                answer_parts.append(delta)
+
+                yield (
+                    "data: "
+                    + json.dumps(
+                        {
+                            "type": "delta",
+                            "content": delta,
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n\n"
+                )
+
+            answer = "".join(answer_parts).strip()
+
+            if not answer:
+
+                answer = (
+                    "I could not generate "
+                    "a response. Please try again."
+                )
+
+                yield (
+                    "data: "
+                    + json.dumps({
+                        "type": "delta",
+                        "content": answer,
+                    })
+                    + "\n\n"
+                )
+
+            # ---------------------------------
+            # STEP 4: SAVE CHAT HISTORY
+            # ---------------------------------
+
+            stream_db.add(
+                Message(
+                    chat_id=request.chat_id,
+                    role="user",
+                    content=visible_message,
+                )
+            )
+
+            stream_db.add(
+                Message(
+                    chat_id=request.chat_id,
+                    role="assistant",
+                    content=answer,
+                )
+            )
+
+            if (
+                current_chat.title == "New Chat"
+                and visible_message
+            ):
+
+                current_chat.title = (
+                    visible_message[:30]
+                )
+
+            stream_db.commit()
+
+            completed = True
+
+            # ---------------------------------
+            # STEP 5: STREAM COMPLETED
+            # ---------------------------------
+
+            yield (
+                "data: "
+                + json.dumps(
+                    {
+                        "type": "done",
+                        "answer": answer,
+                        "title": current_chat.title,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n\n"
+            )
+
+        except GeneratorExit:
+
+            # Client disconnected.
+            # Do not save incomplete answers.
+
+            if not completed:
+                stream_db.rollback()
+
+            raise
+
+        except Exception as error:
+
+            stream_db.rollback()
+
+            print(
+                "STREAM ERROR:",
+                str(error),
+            )
+
+            yield (
+                "data: "
+                + json.dumps(
+                    {
+                        "type": "error",
+                        "message": str(error),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n\n"
+            )
+
+        finally:
+
+            if stream is not None:
+
+                try:
+                    stream.close()
+                except Exception:
+                    pass
+
+            stream_db.close()
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
     )
