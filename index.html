@@ -1539,6 +1539,78 @@ input {
     }
 }
 
+
+/* =====================================
+   ADMIN DASHBOARD
+===================================== */
+
+.admin-card {
+    background: var(--surface);
+    color: var(--text);
+    width: min(1000px, 96vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(145px, 1fr)
+        );
+    gap: 12px;
+    margin: 18px 0 22px;
+}
+
+.admin-stat {
+    background: var(--surface-2);
+    border:
+        1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.admin-stat-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.admin-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.admin-table-wrap {
+    overflow-x: auto;
+    border:
+        1px solid var(--border-light);
+    border-radius: 12px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 11px 12px;
+    border-bottom:
+        1px solid var(--border-light);
+    text-align: left;
+    font-size: 13px;
+}
+
+.admin-table th {
+    background: var(--surface-2);
+}
+
 </style>
 </head>
 
@@ -1861,6 +1933,15 @@ input {
 </button>
 
 
+
+<button
+    class="settings-btn hidden"
+    id="adminDashboardBtn"
+    onclick="openAdminDashboard()"
+>
+    🛡 Admin Dashboard
+</button>
+
 <button
     class="theme-btn"
     id="themeButton"
@@ -2138,6 +2219,167 @@ input {
 </div>
 
 </div>
+</div>
+
+
+
+<!-- ADMIN DASHBOARD -->
+
+<div
+    id="adminModal"
+    class="modal-overlay hidden"
+>
+
+<div class="admin-card">
+
+<div class="settings-header">
+
+<h2>🛡 Admin Dashboard</h2>
+
+<button
+    class="close-btn"
+    onclick="closeAdminDashboard()"
+>
+    ×
+</button>
+
+</div>
+
+
+<div
+    id="adminMessage"
+    class="settings-message"
+></div>
+
+
+<div class="admin-grid">
+
+<div class="admin-stat">
+    <div class="admin-stat-label">
+        Users
+    </div>
+
+    <div
+        class="admin-stat-value"
+        id="adminUsersCount"
+    >
+        -
+    </div>
+</div>
+
+
+<div class="admin-stat">
+    <div class="admin-stat-label">
+        Verified Users
+    </div>
+
+    <div
+        class="admin-stat-value"
+        id="adminVerifiedCount"
+    >
+        -
+    </div>
+</div>
+
+
+<div class="admin-stat">
+    <div class="admin-stat-label">
+        Chats
+    </div>
+
+    <div
+        class="admin-stat-value"
+        id="adminChatsCount"
+    >
+        -
+    </div>
+</div>
+
+
+<div class="admin-stat">
+    <div class="admin-stat-label">
+        Messages
+    </div>
+
+    <div
+        class="admin-stat-value"
+        id="adminMessagesCount"
+    >
+        -
+    </div>
+</div>
+
+
+<div class="admin-stat">
+    <div class="admin-stat-label">
+        RAG Documents
+    </div>
+
+    <div
+        class="admin-stat-value"
+        id="adminDocsCount"
+    >
+        -
+    </div>
+</div>
+
+
+<div class="admin-stat">
+    <div class="admin-stat-label">
+        Saved Memories
+    </div>
+
+    <div
+        class="admin-stat-value"
+        id="adminMemoriesCount"
+    >
+        -
+    </div>
+</div>
+
+</div>
+
+
+<h3 style="margin-bottom:12px;">
+    Users
+</h3>
+
+
+<div class="admin-table-wrap">
+
+<table class="admin-table">
+
+<thead>
+
+<tr>
+    <th>Username</th>
+    <th>Email</th>
+    <th>Verified</th>
+    <th>Chats</th>
+    <th>Documents</th>
+    <th>Memories</th>
+    <th>Created</th>
+</tr>
+
+</thead>
+
+
+<tbody id="adminUsersTable">
+
+<tr>
+    <td colspan="7">
+        Loading...
+    </td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
 </div>
 
 
@@ -3568,6 +3810,8 @@ async function showApp() {
     try {
 
         await loadChats();
+
+        await checkAdminAccess();
 
 
         if (!currentChatId) {
@@ -6667,6 +6911,346 @@ window.addEventListener(
 
     }
 );
+
+
+
+/* =====================================
+   ADMIN DASHBOARD
+===================================== */
+
+async function checkAdminAccess() {
+
+    const button =
+        document.getElementById(
+            "adminDashboardBtn"
+        );
+
+
+    if (
+        !button
+        || !token
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await request(
+                "/admin/status"
+            );
+
+
+        const data =
+            await parseResponse(
+                response
+            );
+
+
+        if (
+            data.is_admin
+        ) {
+
+            button.classList.remove(
+                "hidden"
+            );
+
+        } else {
+
+            button.classList.add(
+                "hidden"
+            );
+
+        }
+
+
+    } catch (error) {
+
+        button.classList.add(
+            "hidden"
+        );
+
+    }
+
+}
+
+
+async function openAdminDashboard() {
+
+    closeSidebarIfMobile();
+
+
+    const modal =
+        document.getElementById(
+            "adminModal"
+        );
+
+
+    modal.classList.remove(
+        "hidden"
+    );
+
+
+    setMessage(
+        "adminMessage",
+        "Loading dashboard...",
+        true
+    );
+
+
+    try {
+
+        const [
+            statsResponse,
+            usersResponse
+        ] =
+            await Promise.all([
+                request(
+                    "/admin/stats"
+                ),
+                request(
+                    "/admin/users"
+                )
+            ]);
+
+
+        const stats =
+            await parseResponse(
+                statsResponse
+            );
+
+
+        const usersData =
+            await parseResponse(
+                usersResponse
+            );
+
+
+        document
+            .getElementById(
+                "adminUsersCount"
+            )
+            .textContent =
+                stats.users ?? 0;
+
+
+        document
+            .getElementById(
+                "adminVerifiedCount"
+            )
+            .textContent =
+                stats.verified_users
+                ?? 0;
+
+
+        document
+            .getElementById(
+                "adminChatsCount"
+            )
+            .textContent =
+                stats.chats ?? 0;
+
+
+        document
+            .getElementById(
+                "adminMessagesCount"
+            )
+            .textContent =
+                stats.messages ?? 0;
+
+
+        document
+            .getElementById(
+                "adminDocsCount"
+            )
+            .textContent =
+                stats.documents ?? 0;
+
+
+        document
+            .getElementById(
+                "adminMemoriesCount"
+            )
+            .textContent =
+                stats.memories ?? 0;
+
+
+        renderAdminUsers(
+            usersData.users || []
+        );
+
+
+        setMessage(
+            "adminMessage",
+            "Dashboard loaded.",
+            true
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            "adminMessage",
+            error.message
+        );
+
+    }
+
+}
+
+
+function renderAdminUsers(
+    users
+) {
+
+    const tbody =
+        document.getElementById(
+            "adminUsersTable"
+        );
+
+
+    tbody.innerHTML = "";
+
+
+    if (
+        !users.length
+    ) {
+
+        const row =
+            document.createElement(
+                "tr"
+            );
+
+
+        const cell =
+            document.createElement(
+                "td"
+            );
+
+
+        cell.colSpan = 7;
+
+
+        cell.textContent =
+            "No users found.";
+
+
+        row.appendChild(
+            cell
+        );
+
+
+        tbody.appendChild(
+            row
+        );
+
+
+        return;
+
+    }
+
+
+    users.forEach(
+        user => {
+
+            const row =
+                document.createElement(
+                    "tr"
+                );
+
+
+            const values = [
+
+                user.username
+                || "",
+
+                user.email
+                || "",
+
+                user.email_verified
+                    ? "✓ Yes"
+                    : "No",
+
+                user.chat_count
+                ?? 0,
+
+                user.document_count
+                ?? 0,
+
+                user.memory_count
+                ?? 0,
+
+                user.created_at
+                    ? new Date(
+                        user.created_at
+                    ).toLocaleString()
+                    : ""
+
+            ];
+
+
+            values.forEach(
+                (
+                    value,
+                    index
+                ) => {
+
+                    const cell =
+                        document.createElement(
+                            "td"
+                        );
+
+
+                    cell.textContent =
+                        String(
+                            value
+                        );
+
+
+                    if (
+                        index === 2
+                        && user.email_verified
+                    ) {
+
+                        cell.className =
+                            "verified";
+
+                    }
+
+
+                    row.appendChild(
+                        cell
+                    );
+
+                }
+            );
+
+
+            tbody.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+
+function closeAdminDashboard() {
+
+    document
+        .getElementById(
+            "adminModal"
+        )
+        .classList
+        .add(
+            "hidden"
+        );
+
+}
 
 
 /* =====================================
