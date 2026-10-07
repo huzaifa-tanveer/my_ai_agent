@@ -1804,6 +1804,16 @@ class RenameChatRequest(BaseModel):
 
 
 
+class MemoryRequest(BaseModel):
+
+    key: str
+
+    value: str
+
+
+
+
+
 class ChatRequest(BaseModel):
 
     chat_id: str
@@ -2959,6 +2969,167 @@ def get_profile(
 
 
 
+
+
+# =========================================================
+# MEMORY MANAGEMENT
+# =========================================================
+
+
+@app.get("/memories")
+def list_memories(
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+    db = SessionLocal()
+
+    try:
+        items = (
+            db.query(UserMemory)
+            .filter(UserMemory.username == username)
+            .order_by(UserMemory.updated_at.desc())
+            .all()
+        )
+
+        return {
+            "memories": [
+                {
+                    "id": item.id,
+                    "key": item.memory_key,
+                    "value": item.memory_value,
+                    "updated_at": (
+                        item.updated_at.isoformat()
+                        if item.updated_at
+                        else None
+                    ),
+                }
+                for item in items
+            ]
+        }
+
+    finally:
+        db.close()
+
+
+@app.post("/memories")
+def create_memory(
+    data: MemoryRequest,
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+    key = data.key.strip()
+    value = data.value.strip()
+
+    if not key or not value:
+        raise HTTPException(status_code=400, detail="Memory key and value are required.")
+
+    if len(key) > 255:
+        raise HTTPException(status_code=400, detail="Memory key must be 255 characters or less.")
+
+    db = SessionLocal()
+    try:
+        item = (
+            db.query(UserMemory)
+            .filter(UserMemory.username == username, UserMemory.memory_key == key)
+            .first()
+        )
+        if item:
+            item.memory_value = value
+            item.updated_at = datetime.utcnow()
+        else:
+            item = UserMemory(username=username, memory_key=key, memory_value=value)
+            db.add(item)
+
+        db.commit()
+        db.refresh(item)
+        return {
+            "message": "Memory saved successfully.",
+            "memory": {
+                "id": item.id,
+                "key": item.memory_key,
+                "value": item.memory_value,
+                "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+            },
+        }
+    finally:
+        db.close()
+
+
+@app.put("/memories/{memory_id}")
+def update_memory(
+    memory_id: int,
+    data: MemoryRequest,
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+    key = data.key.strip()
+    value = data.value.strip()
+
+    if not key or not value:
+        raise HTTPException(status_code=400, detail="Memory key and value are required.")
+    if len(key) > 255:
+        raise HTTPException(status_code=400, detail="Memory key must be 255 characters or less.")
+
+    db = SessionLocal()
+    try:
+        item = (
+            db.query(UserMemory)
+            .filter(UserMemory.id == memory_id, UserMemory.username == username)
+            .first()
+        )
+        if not item:
+            raise HTTPException(status_code=404, detail="Memory not found.")
+
+        duplicate = (
+            db.query(UserMemory)
+            .filter(
+                UserMemory.username == username,
+                UserMemory.memory_key == key,
+                UserMemory.id != memory_id,
+            )
+            .first()
+        )
+        if duplicate:
+            raise HTTPException(status_code=400, detail="A memory with this key already exists.")
+
+        item.memory_key = key
+        item.memory_value = value
+        item.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(item)
+        return {
+            "message": "Memory updated successfully.",
+            "memory": {
+                "id": item.id,
+                "key": item.memory_key,
+                "value": item.memory_value,
+                "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+            },
+        }
+    finally:
+        db.close()
+
+
+@app.delete("/memories/{memory_id}")
+def delete_memory(
+    memory_id: int,
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+    db = SessionLocal()
+    try:
+        item = (
+            db.query(UserMemory)
+            .filter(UserMemory.id == memory_id, UserMemory.username == username)
+            .first()
+        )
+        if not item:
+            raise HTTPException(status_code=404, detail="Memory not found.")
+        db.delete(item)
+        db.commit()
+        return {"message": "Memory deleted successfully."}
+    finally:
+        db.close()
 
 
 # =========================================================

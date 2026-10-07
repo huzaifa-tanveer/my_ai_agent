@@ -1260,6 +1260,74 @@ input {
 }
 
 
+.memory-create-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.memory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.memory-empty {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 12px;
+    text-align: center;
+    background: var(--surface-2);
+    border-radius: 9px;
+}
+
+.memory-item {
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    background: var(--surface-2);
+}
+
+.memory-item-key {
+    font-weight: 700;
+    margin-bottom: 6px;
+    word-break: break-word;
+}
+
+.memory-item-value {
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.memory-item-time {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 8px;
+}
+
+.memory-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.settings-section .memory-actions button {
+    width: auto;
+    padding: 7px 10px;
+    font-size: 12px;
+}
+
+.memory-delete-btn {
+    background: var(--danger) !important;
+    color: white !important;
+}
+
+
 /* =====================================
    MOBILE
 ===================================== */
@@ -2163,6 +2231,45 @@ input {
     Loading...
 </div>
 
+</div>
+
+</div>
+
+
+<div class="settings-section">
+
+<h3>🧠 Saved Memories</h3>
+
+<p style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+    View, add, edit or delete information your AI remembers.
+</p>
+
+<div class="memory-create-grid">
+    <input
+        id="memoryKeyInput"
+        placeholder="Memory key, e.g. favorite_language"
+    >
+
+    <input
+        id="memoryValueInput"
+        placeholder="Memory value, e.g. Python"
+    >
+
+    <button onclick="addMemoryFromSettings()">
+        + Save Memory
+    </button>
+</div>
+
+<div
+    id="memorySettingsMessage"
+    class="settings-message"
+></div>
+
+<div
+    id="memoryList"
+    class="memory-list"
+>
+    <div class="memory-empty">Loading memories...</div>
 </div>
 
 </div>
@@ -5737,6 +5844,9 @@ async function openSettings() {
                     : "Unknown";
 
 
+        await loadMemories();
+
+
     } catch (error) {
 
         setAppMessage(
@@ -5756,6 +5866,431 @@ function closeSettings() {
         )
         .classList
         .add("hidden");
+
+}
+
+
+/* =====================================
+   MEMORY MANAGEMENT
+===================================== */
+
+async function loadMemories() {
+
+    const list =
+        document.getElementById(
+            "memoryList"
+        );
+
+
+    if (!list) {
+        return;
+    }
+
+
+    list.innerHTML =
+        '<div class="memory-empty">Loading memories...</div>';
+
+
+    try {
+
+        const response =
+            await request(
+                "/memories"
+            );
+
+
+        const data =
+            await parseResponse(
+                response
+            );
+
+
+        renderMemories(
+            data.memories || []
+        );
+
+
+    } catch (error) {
+
+        list.innerHTML =
+            '<div class="memory-empty">Could not load memories.</div>';
+
+
+        setMessage(
+            "memorySettingsMessage",
+            error.message
+        );
+
+    }
+
+}
+
+
+function renderMemories(memories) {
+
+    const list =
+        document.getElementById(
+            "memoryList"
+        );
+
+
+    list.innerHTML = "";
+
+
+    if (!memories.length) {
+
+        list.innerHTML =
+            '<div class="memory-empty">No saved memories yet.</div>';
+
+        return;
+
+    }
+
+
+    memories.forEach(memory => {
+
+        const item =
+            document.createElement(
+                "div"
+            );
+
+        item.className =
+            "memory-item";
+
+
+        const key =
+            document.createElement(
+                "div"
+            );
+
+        key.className =
+            "memory-item-key";
+
+        key.textContent =
+            memory.key || "Memory";
+
+
+        const value =
+            document.createElement(
+                "div"
+            );
+
+        value.className =
+            "memory-item-value";
+
+        value.textContent =
+            memory.value || "";
+
+
+        const time =
+            document.createElement(
+                "div"
+            );
+
+        time.className =
+            "memory-item-time";
+
+        time.textContent =
+            memory.updated_at
+                ? "Updated: "
+                  + new Date(
+                      memory.updated_at
+                  ).toLocaleString()
+                : "";
+
+
+        const actions =
+            document.createElement(
+                "div"
+            );
+
+        actions.className =
+            "memory-actions";
+
+
+        const editButton =
+            document.createElement(
+                "button"
+            );
+
+        editButton.textContent =
+            "✏ Edit";
+
+        editButton.onclick =
+            () => editMemory(
+                memory
+            );
+
+
+        const deleteButton =
+            document.createElement(
+                "button"
+            );
+
+        deleteButton.className =
+            "memory-delete-btn";
+
+        deleteButton.textContent =
+            "🗑 Delete";
+
+        deleteButton.onclick =
+            () => deleteMemory(
+                memory.id,
+                memory.key
+            );
+
+
+        actions.appendChild(
+            editButton
+        );
+
+        actions.appendChild(
+            deleteButton
+        );
+
+
+        item.appendChild(key);
+        item.appendChild(value);
+        item.appendChild(time);
+        item.appendChild(actions);
+
+        list.appendChild(item);
+
+    });
+
+}
+
+
+async function addMemoryFromSettings() {
+
+    const keyInput =
+        document.getElementById(
+            "memoryKeyInput"
+        );
+
+    const valueInput =
+        document.getElementById(
+            "memoryValueInput"
+        );
+
+    const key =
+        keyInput.value.trim();
+
+    const value =
+        valueInput.value.trim();
+
+
+    if (!key || !value) {
+
+        setMessage(
+            "memorySettingsMessage",
+            "Enter both a memory key and value."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await request(
+                "/memories",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        key,
+                        value
+                    })
+                }
+            );
+
+
+        const data =
+            await parseResponse(
+                response
+            );
+
+
+        keyInput.value = "";
+        valueInput.value = "";
+
+
+        setMessage(
+            "memorySettingsMessage",
+            data.message
+            || "Memory saved.",
+            true
+        );
+
+
+        await loadMemories();
+
+
+    } catch (error) {
+
+        setMessage(
+            "memorySettingsMessage",
+            error.message
+        );
+
+    }
+
+}
+
+
+async function editMemory(memory) {
+
+    const newKey =
+        prompt(
+            "Memory key:",
+            memory.key || ""
+        );
+
+
+    if (newKey === null) {
+        return;
+    }
+
+
+    const newValue =
+        prompt(
+            "Memory value:",
+            memory.value || ""
+        );
+
+
+    if (newValue === null) {
+        return;
+    }
+
+
+    const cleanKey =
+        newKey.trim();
+
+    const cleanValue =
+        newValue.trim();
+
+
+    if (!cleanKey || !cleanValue) {
+
+        setMessage(
+            "memorySettingsMessage",
+            "Memory key and value cannot be empty."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await request(
+                "/memories/"
+                + encodeURIComponent(
+                    memory.id
+                ),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        key: cleanKey,
+                        value: cleanValue
+                    })
+                }
+            );
+
+
+        const data =
+            await parseResponse(
+                response
+            );
+
+
+        setMessage(
+            "memorySettingsMessage",
+            data.message
+            || "Memory updated.",
+            true
+        );
+
+
+        await loadMemories();
+
+
+    } catch (error) {
+
+        setMessage(
+            "memorySettingsMessage",
+            error.message
+        );
+
+    }
+
+}
+
+
+async function deleteMemory(
+    memoryId,
+    memoryKey
+) {
+
+    if (
+        !confirm(
+            `Delete memory "${memoryKey}"?`
+        )
+    ) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await request(
+                "/memories/"
+                + encodeURIComponent(
+                    memoryId
+                ),
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        const data =
+            await parseResponse(
+                response
+            );
+
+
+        setMessage(
+            "memorySettingsMessage",
+            data.message
+            || "Memory deleted.",
+            true
+        );
+
+
+        await loadMemories();
+
+
+    } catch (error) {
+
+        setMessage(
+            "memorySettingsMessage",
+            error.message
+        );
+
+    }
 
 }
 
