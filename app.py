@@ -893,6 +893,96 @@ class EmailVerificationCode(Base):
 
 
 
+
+
+class RagDocument(Base):
+
+    __tablename__ = "rag_documents"
+
+    document_id = Column(
+        String(64),
+        primary_key=True,
+    )
+
+    username = Column(
+        String(100),
+        ForeignKey(
+            "users.username",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    filename = Column(
+        String(255),
+        nullable=False,
+    )
+
+    file_path = Column(
+        Text,
+        nullable=False,
+    )
+
+    file_type = Column(
+        String(20),
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+
+class RagChunk(Base):
+
+    __tablename__ = "rag_chunks"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    document_id = Column(
+        String(64),
+        ForeignKey(
+            "rag_documents.document_id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    username = Column(
+        String(100),
+        ForeignKey(
+            "users.username",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    chunk_index = Column(
+        Integer,
+        nullable=False,
+    )
+
+    content = Column(
+        Text,
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+
 Base.metadata.create_all(
 
     bind=engine
@@ -1716,6 +1806,12 @@ class ChatRequest(BaseModel):
     message: str
 
     file_path: Optional[str] = None
+
+
+class RagAskRequest(BaseModel):
+    question: str
+    document_id: Optional[str] = None
+    top_k: int = 5
 
 
 
@@ -6837,6 +6933,602 @@ def regenerate_response(
         raise HTTPException(
             status_code=500,
             detail="Could not regenerate response.",
+        )
+
+    finally:
+        db.close()
+
+
+# =========================================================
+# RAG - DOCUMENT RETRIEVAL
+# =========================================================
+
+def extract_rag_text(file_path, extension):
+    extension = extension.lower()
+
+    if extension == ".txt":
+        with open(
+            file_path,
+            "r",
+            encoding="utf-8",
+            errors="replace",
+        ) as file:
+            return file.read()
+
+    if extension == ".csv":
+        dataframe = pd.read_csv(file_path)
+        return dataframe.to_csv(index=False)
+
+    if extension == ".pdf":
+        reader = PdfReader(file_path)
+        pages = []
+
+        for page_number, page in enumerate(
+            reader.pages,
+            start=1,
+        ):
+            page_text = page.extract_text() or ""
+
+            if page_text.strip():
+                pages.append(
+                    f"[Page {page_number}]\n{page_text}"
+                )
+
+        return "\n\n".join(pages)
+
+    raise ValueError("Unsupported RAG file type")
+
+
+def chunk_rag_text(
+    text_value,
+    chunk_size=1200,
+    overlap=200,
+):
+    clean_text = re.sub(
+        r"[ \t]+",
+        " ",
+        text_value or "",
+    )
+
+    clean_text = re.sub(
+        r"\n{3,}",
+        "\n\n",
+        clean_text,
+    ).strip()
+
+    if not clean_text:
+        return []
+
+    chunks = []
+    start = 0
+    length = len(clean_text)
+
+    while start < length:
+        end = min(
+            start + chunk_size,
+            length,
+        )
+
+        if end < length:
+            boundary = max(
+                clean_text.rfind("\n", start, end),
+                clean_text.rfind(". ", start, end),
+                clean_text.rfind(" ", start, end),
+            )
+
+            if boundary > start + (chunk_size // 2):
+                end = boundary + 1
+
+        chunk = clean_text[start:end].strip()
+
+        if chunk:
+            chunks.append(chunk)
+
+        if end >= length:
+            break
+
+        start = max(
+            end - overlap,
+            start + 1,
+        )
+
+    return chunks
+
+
+def rag_tokens(text_value):
+    return re.findall(
+        r"[\w]+",
+        (text_value or "").lower(),
+        flags=re.UNICODE,
+    )
+
+
+def score_rag_chunk(question, chunk_content):
+    query_tokens = rag_tokens(question)
+
+    if not query_tokens:
+        return 0.0
+
+    chunk_tokens = rag_tokens(chunk_content)
+
+    if not chunk_tokens:
+        return 0.0
+
+    query_set = set(query_tokens)
+    chunk_set = set(chunk_tokens)
+    overlap = query_set.intersection(chunk_set)
+
+    if not overlap:
+        return 0.0
+
+    overlap_score = len(overlap) / max(
+        len(query_set),
+        1,
+    )
+
+    exact_bonus = 0.0
+    clean_question = (question or "").strip().lower()
+
+    if (
+        len(clean_question) >= 4
+        and clean_question in (chunk_content or "").lower()
+    ):
+        exact_bonus = 1.0
+
+    frequency_bonus = sum(
+        min(chunk_tokens.count(token), 3)
+        for token in overlap
+    ) / max(len(query_set) * 3, 1)
+
+    return (
+        overlap_score * 0.75
+        + frequency_bonus * 0.25
+        + exact_bonus
+    )
+
+
+def retrieve_rag_chunks(
+    db,
+    username,
+    question,
+    document_id=None,
+    top_k=5,
+):
+    query = db.query(
+        RagChunk,
+        RagDocument,
+    ).join(
+        RagDocument,
+        RagDocument.document_id
+        == RagChunk.document_id,
+    ).filter(
+        RagChunk.username == username,
+        RagDocument.username == username,
+    )
+
+    if document_id:
+        query = query.filter(
+            RagChunk.document_id == document_id
+        )
+
+    rows = query.all()
+    scored = []
+
+    for chunk, document in rows:
+        score = score_rag_chunk(
+            question,
+            chunk.content,
+        )
+
+        if score > 0:
+            scored.append((
+                score,
+                chunk,
+                document,
+            ))
+
+    scored.sort(
+        key=lambda item: item[0],
+        reverse=True,
+    )
+
+    return scored[:top_k]
+
+
+@app.post("/rag/upload")
+async def rag_upload_document(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+
+    original_name = os.path.basename(
+        file.filename or "document"
+    )
+
+    extension = os.path.splitext(
+        original_name
+    )[1].lower()
+
+    if extension not in [
+        ".txt",
+        ".csv",
+        ".pdf",
+    ]:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Only TXT, CSV and PDF "
+                "documents are supported."
+            ),
+        )
+
+    document_id = uuid.uuid4().hex
+
+    rag_folder = os.path.join(
+        UPLOAD_DIR,
+        username,
+        "rag",
+    )
+
+    os.makedirs(
+        rag_folder,
+        exist_ok=True,
+    )
+
+    stored_name = (
+        f"{document_id}_"
+        + original_name
+    )
+
+    file_path = os.path.abspath(
+        os.path.join(
+            rag_folder,
+            stored_name,
+        )
+    )
+
+    content = await file.read()
+
+    if not content:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded file is empty.",
+        )
+
+    with open(file_path, "wb") as output:
+        output.write(content)
+
+    try:
+        extracted_text = extract_rag_text(
+            file_path,
+            extension,
+        )
+    except Exception as error:
+        try:
+            os.remove(file_path)
+        except Exception:
+            pass
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Could not read document: "
+                + str(error)
+            ),
+        )
+
+    if not extracted_text.strip():
+        try:
+            os.remove(file_path)
+        except Exception:
+            pass
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No readable text found. "
+                "Scanned PDFs need OCR before upload."
+            ),
+        )
+
+    chunks = chunk_rag_text(extracted_text)
+
+    if not chunks:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not create document chunks.",
+        )
+
+    db = SessionLocal()
+
+    try:
+        document = RagDocument(
+            document_id=document_id,
+            username=username,
+            filename=original_name,
+            file_path=file_path,
+            file_type=extension.lstrip("."),
+        )
+
+        db.add(document)
+        db.flush()
+
+        for index, chunk in enumerate(chunks):
+            db.add(
+                RagChunk(
+                    document_id=document_id,
+                    username=username,
+                    chunk_index=index,
+                    content=chunk,
+                )
+            )
+
+        db.commit()
+
+        return {
+            "success": True,
+            "document_id": document_id,
+            "filename": original_name,
+            "chunks": len(chunks),
+        }
+
+    except Exception:
+        db.rollback()
+
+        try:
+            os.remove(file_path)
+        except Exception:
+            pass
+
+        raise
+
+    finally:
+        db.close()
+
+
+@app.get("/rag/documents")
+def rag_list_documents(
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+    db = SessionLocal()
+
+    try:
+        documents = (
+            db.query(RagDocument)
+            .filter(
+                RagDocument.username == username
+            )
+            .order_by(
+                RagDocument.created_at.desc()
+            )
+            .all()
+        )
+
+        result = []
+
+        for document in documents:
+            chunk_count = (
+                db.query(RagChunk)
+                .filter(
+                    RagChunk.document_id
+                    == document.document_id,
+                    RagChunk.username
+                    == username,
+                )
+                .count()
+            )
+
+            result.append({
+                "document_id": document.document_id,
+                "filename": document.filename,
+                "file_type": document.file_type,
+                "chunks": chunk_count,
+                "created_at": (
+                    document.created_at.isoformat()
+                    if document.created_at
+                    else None
+                ),
+            })
+
+        return {
+            "documents": result
+        }
+
+    finally:
+        db.close()
+
+
+@app.delete("/rag/documents/{document_id}")
+def rag_delete_document(
+    document_id: str,
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+    db = SessionLocal()
+
+    try:
+        document = (
+            db.query(RagDocument)
+            .filter(
+                RagDocument.document_id == document_id,
+                RagDocument.username == username,
+            )
+            .first()
+        )
+
+        if not document:
+            raise HTTPException(
+                status_code=404,
+                detail="Document not found.",
+            )
+
+        stored_path = document.file_path
+
+        db.query(RagChunk).filter(
+            RagChunk.document_id == document_id,
+            RagChunk.username == username,
+        ).delete(
+            synchronize_session=False
+        )
+
+        db.delete(document)
+        db.commit()
+
+        if stored_path and os.path.exists(stored_path):
+            try:
+                os.remove(stored_path)
+            except Exception as error:
+                print(
+                    "RAG FILE DELETE ERROR:",
+                    str(error),
+                )
+
+        return {
+            "success": True,
+            "message": "Document deleted.",
+        }
+
+    finally:
+        db.close()
+
+
+@app.post("/rag/ask")
+def rag_ask(
+    request: RagAskRequest,
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+
+    question = request.question.strip()
+
+    if not question:
+        raise HTTPException(
+            status_code=400,
+            detail="Question is required.",
+        )
+
+    top_k = max(
+        1,
+        min(request.top_k, 8),
+    )
+
+    db = SessionLocal()
+
+    try:
+        if request.document_id:
+            document = (
+                db.query(RagDocument)
+                .filter(
+                    RagDocument.document_id
+                    == request.document_id,
+                    RagDocument.username
+                    == username,
+                )
+                .first()
+            )
+
+            if not document:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Document not found.",
+                )
+
+        matches = retrieve_rag_chunks(
+            db,
+            username,
+            question,
+            document_id=request.document_id,
+            top_k=top_k,
+        )
+
+        if not matches:
+            return {
+                "answer": (
+                    "I could not find relevant "
+                    "information in your uploaded documents."
+                ),
+                "sources": [],
+            }
+
+        context_parts = []
+        source_items = []
+
+        for rank, (score, chunk, document) in enumerate(
+            matches,
+            start=1,
+        ):
+            context_parts.append(
+                f"SOURCE {rank} - {document.filename} "
+                f"(chunk {chunk.chunk_index + 1}):\n"
+                f"{chunk.content}"
+            )
+
+            source_items.append({
+                "document_id": document.document_id,
+                "filename": document.filename,
+                "chunk": chunk.chunk_index + 1,
+                "score": round(score, 4),
+            })
+
+        rag_prompt = (
+            "Answer the user's question using only the "
+            "document context below. If the answer is not "
+            "supported by the context, say that it was not "
+            "found in the uploaded documents. Do not invent "
+            "facts. When useful, mention the source filename.\n\n"
+            "DOCUMENT CONTEXT:\n"
+            + "\n\n".join(context_parts)
+            + "\n\nUSER QUESTION:\n"
+            + question
+        )
+
+        response = client.chat.completions.create(
+            model=OPENROUTER_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a retrieval-augmented "
+                        "document question-answering assistant."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": rag_prompt,
+                },
+            ],
+        )
+
+        answer = (
+            response.choices[0].message.content
+            or (
+                "I could not generate a document-based "
+                "answer. Please try again."
+            )
+        )
+
+        return {
+            "answer": answer,
+            "sources": source_items,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        print(
+            "RAG ASK ERROR:",
+            str(error),
+        )
+
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "RAG answer error: "
+                + str(error)
+            ),
         )
 
     finally:
