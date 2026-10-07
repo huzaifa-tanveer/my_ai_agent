@@ -4123,209 +4123,180 @@ function removeThinkingMessage() {
    SEND MESSAGE
 ===================================== */
 
-async function sendMessage() {
-
-    if (isGenerating) {
-
-        return;
-
+// Read SSE events from the authenticated streaming fetch response.
+// UTF-8 text and event boundaries may be split across network chunks.
+async function readChatEventStream(response, onEvent, signal) {
+    if (!response.ok) {
+        await parseResponse(response);
+    }
+    if (!response.body) {
+        throw new Error("Streaming is not supported by this browser.");
     }
 
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let pending = "";
+    let finished = false;
 
-    const input =
-        document.getElementById(
-            "messageInput"
-        );
-
-
-    const message =
-        input.value.trim();
-
-
-    if (
-        !message
-        && !uploadedFilePath
-    ) {
-
-        return;
-
+    function consumeEvent(frame) {
+        const data = frame.split("\n")
+            .filter(line => line.startsWith("data:"))
+            .map(line => line.slice(5).trimStart())
+            .join("\n");
+        if (!data) return;
+        let event;
+        try {
+            event = JSON.parse(data);
+        } catch (error) {
+            throw new Error("Invalid streaming data from server.");
+        }
+        onEvent(event);
+        if (event.type === "done" || event.type === "error") {
+            finished = true;
+        }
     }
-
-
-    if (!currentChatId) {
-
-        await createNewChat();
-
-    }
-
-
-    const visibleMessage =
-        message
-        || "Please analyze the uploaded file.";
-
-
-    appendMessage(
-        "user",
-        visibleMessage
-    );
-
-
-    input.value =
-        "";
-
-
-    setAppMessage(
-        ""
-    );
-
-
-    setGenerating(
-        true
-    );
-
-
-    addThinkingMessage();
-
-
-    activeController =
-        new AbortController();
-
 
     try {
-
-        const response =
-            await request(
-                "/chat",
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            chat_id:
-                                currentChatId,
-
-                            message:
-                                visibleMessage,
-
-                            file_path:
-                                uploadedFilePath
-
-                        }),
-
-                    signal:
-                        activeController.signal
-
-                }
-            );
-
-
-        const data =
-            await parseResponse(
-                response
-            );
-
-
-        removeThinkingMessage();
-
-
-        appendMessage(
-            "assistant",
-            data.answer
-            || "",
-            true
-        );
-
-
-        if (
-            data.title
-        ) {
-
-            document
-                .getElementById(
-                    "currentChatTitle"
-                )
-                .textContent =
-                    data.title;
-
+        while (!finished) {
+            if (signal.aborted) {
+                throw new DOMException("Stopped", "AbortError");
+            }
+            const { value, done } = await reader.read();
+            if (done) {
+                pending += decoder.decode();
+                break;
+            }
+            pending += decoder.decode(value, { stream: true });
+            pending = pending.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+            let boundary;
+            while ((boundary = pending.indexOf("\n\n")) !== -1) {
+                const frame = pending.slice(0, boundary);
+                pending = pending.slice(boundary + 2);
+                consumeEvent(frame);
+                if (finished) break;
+            }
         }
-
-
-        uploadedFilePath =
-            null;
-
-
-        document
-            .getElementById(
-                "selectedFile"
-            )
-            .textContent =
-                "";
-
-
-        document
-            .getElementById(
-                "fileInput"
-            )
-            .value =
-                "";
-
-
-        await loadChats();
-
-
-        filterChats();
-
-
-    } catch (error) {
-
-        removeThinkingMessage();
-
-
-        if (
-            error.name
-            === "AbortError"
-        ) {
-
-            setAppMessage(
-                "Generation stopped.",
-                true
-            );
-
-        } else {
-
-            appendMessage(
-                "assistant",
-                "Error: "
-                + error.message,
-                true
-            );
-
+        if (!finished && pending.trim()) {
+            consumeEvent(pending);
         }
-
-
+        if (!finished) {
+            throw new Error("Stream ended before completion. Please check chat history.");
+        }
     } finally {
-
-        activeController =
-            null;
-
-
-        setGenerating(
-            false
-        );
+        try { await reader.cancel(); } catch (error) {}
+        reader.releaseLock();
+    }
+}
 
 
-        input.focus();
+/* =====================================
+   SEND MESSAGE — LIVE STREAMING
+===================================== */
 
+async function sendMessage() {
+    if (isGenerating) return;
+
+    const input = document.getElementById("messageInput");
+    const message = input.value.trim();
+    if (!message && !uploadedFilePath) return;
+
+    if (!currentChatId) await createNewChat();
+    if (!currentChatId) return;
+
+    const chatId = currentChatId;
+    const filePath = uploadedFilePath;
+    const visibleMessage = message || "Please analyze the uploaded file.";
+
+    appendMessage("user", visibleMessage);
+    input.value = "";
+    setAppMessage("");
+    setGenerating(true);
+    addThinkingMessage();
+
+    const controller = new AbortController();
+    activeController = controller;
+    let answer = "";
+    let wasDone = false;
+    let liveRow = null;
+    let liveBubble = null;
+
+    function showDelta() {
+        if (!liveRow) {
+            removeThinkingMessage();
+            const container = document.getElementById("messages");
+            liveRow = document.createElement("div");
+            liveRow.className = "message-row assistant";
+            liveBubble = document.createElement("div");
+            liveBubble.className = "message";
+            liveRow.appendChild(liveBubble);
+            container.appendChild(liveRow);
+        }
+        // Keep raw text during streaming: partial Markdown is often invalid.
+        liveBubble.textContent = answer;
+        const container = document.getElementById("messages");
+        container.scrollTop = container.scrollHeight;
     }
 
+    try {
+        const response = await request("/chat/stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                chat_id: chatId,
+                message: visibleMessage,
+                file_path: filePath
+            }),
+            signal: controller.signal
+        });
+
+        await readChatEventStream(response, event => {
+            if (controller.signal.aborted) return;
+            if (event.type === "delta") {
+                answer += event.content || "";
+                showDelta();
+            } else if (event.type === "error") {
+                throw new Error(event.message || "Streaming failed.");
+            } else if (event.type === "done") {
+                wasDone = true;
+                if (typeof event.answer === "string") answer = event.answer;
+                if (currentChatId === chatId && event.title) {
+                    document.getElementById("currentChatTitle").textContent = event.title;
+                }
+            }
+        }, controller.signal);
+
+        if (controller.signal.aborted) return;
+        if (!wasDone) throw new Error("No completion event received.");
+
+        if (currentChatId === chatId) {
+            removeThinkingMessage();
+            if (liveRow) liveRow.remove();
+            // Render complete Markdown and enable Copy / Regenerate actions.
+            appendMessage("assistant", answer, true);
+            uploadedFilePath = null;
+            document.getElementById("selectedFile").textContent = "";
+            document.getElementById("fileInput").value = "";
+            await loadChats();
+            filterChats();
+        }
+    } catch (error) {
+        if (liveRow) liveRow.remove();
+        if (activeController === controller) removeThinkingMessage();
+        if (error.name === "AbortError" || controller.signal.aborted) {
+            if (activeController === controller) {
+                setAppMessage("Generation stopped. Partial answer was not saved.", true);
+            }
+        } else if (activeController === controller) {
+            setAppMessage("Streaming error: " + error.message);
+        }
+    } finally {
+        // Avoid an earlier cancelled request resetting a newer request.
+        if (activeController === controller) {
+            activeController = null;
+            setGenerating(false);
+            input.focus();
+        }
+    }
 }
 
 
