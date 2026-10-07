@@ -20,6 +20,11 @@ import smtplib
 
 import shutil
 import io
+import ipaddress
+import socket
+from html.parser import HTMLParser
+from urllib.parse import urlparse
+from urllib.request import Request, build_opener, HTTPRedirectHandler
 
 import json
 
@@ -1806,6 +1811,13 @@ class ChatRequest(BaseModel):
     message: str
 
     file_path: Optional[str] = None
+
+
+class UrlReaderRequest(BaseModel):
+
+    url: str
+
+    question: Optional[str] = None
 
 
 class RagAskRequest(BaseModel):
@@ -4396,6 +4408,167 @@ def read_pdf_file(
 
 
 # =========================================================
+# SAFE WEBSITE / URL READER
+# =========================================================
+
+URL_READER_MAX_BYTES = 2 * 1024 * 1024
+URL_READER_MAX_TEXT = 60000
+
+
+def _validate_public_url(url: str):
+    value = (url or "").strip()
+    parsed = urlparse(value)
+
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("Only http:// and https:// URLs are supported.")
+
+    if not parsed.hostname:
+        raise ValueError("Invalid URL.")
+
+    if parsed.username or parsed.password:
+        raise ValueError("URLs with embedded credentials are not allowed.")
+
+    hostname = parsed.hostname.strip().lower()
+    if hostname in {"localhost", "localhost.localdomain"} or hostname.endswith(".local"):
+        raise ValueError("Local or private network URLs are not allowed.")
+
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+
+    try:
+        addresses = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
+    except socket.gaierror:
+        raise ValueError("Could not resolve website hostname.")
+
+    if not addresses:
+        raise ValueError("Could not resolve website hostname.")
+
+    for item in addresses:
+        ip_text = item[4][0]
+        try:
+            ip = ipaddress.ip_address(ip_text)
+        except ValueError:
+            continue
+
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            raise ValueError("Local or private network URLs are not allowed.")
+
+    return value
+
+
+class _SafeRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        _validate_public_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+class _ReadableHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.title_parts = []
+        self.skip_depth = 0
+        self.in_title = False
+
+    def handle_starttag(self, tag, attrs):
+        name = tag.lower()
+        if name in {"script", "style", "noscript", "svg", "canvas", "template"}:
+            self.skip_depth += 1
+        if name == "title" and self.skip_depth == 0:
+            self.in_title = True
+        if name in {"p", "div", "section", "article", "main", "header", "footer", "li", "br", "h1", "h2", "h3", "h4", "h5", "h6"}:
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag):
+        name = tag.lower()
+        if name == "title":
+            self.in_title = False
+        if name in {"script", "style", "noscript", "svg", "canvas", "template"} and self.skip_depth:
+            self.skip_depth -= 1
+        if name in {"p", "div", "section", "article", "main", "header", "footer", "li", "h1", "h2", "h3", "h4", "h5", "h6"}:
+            self.parts.append("\n")
+
+    def handle_data(self, data):
+        if self.skip_depth:
+            return
+        clean = " ".join((data or "").split())
+        if not clean:
+            return
+        if self.in_title:
+            self.title_parts.append(clean)
+        self.parts.append(clean + " ")
+
+    def get_text(self):
+        raw = "".join(self.parts)
+        lines = [" ".join(line.split()) for line in raw.splitlines()]
+        return "\n".join(line for line in lines if line).strip()
+
+    def get_title(self):
+        return " ".join(self.title_parts).strip()
+
+
+def read_webpage(url: str):
+    safe_url = _validate_public_url(url)
+
+    request = Request(
+        safe_url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (compatible; MyAIAgent/1.0)",
+            "Accept": "text/html,text/plain,application/xhtml+xml;q=0.9,*/*;q=0.1",
+        },
+        method="GET",
+    )
+
+    opener = build_opener(_SafeRedirectHandler())
+
+    with opener.open(request, timeout=12) as response:
+        final_url = response.geturl()
+        _validate_public_url(final_url)
+
+        content_type = (response.headers.get_content_type() or "").lower()
+        if content_type not in {"text/html", "text/plain", "application/xhtml+xml"}:
+            raise ValueError("This URL is not a readable HTML/text webpage.")
+
+        data = response.read(URL_READER_MAX_BYTES + 1)
+        if len(data) > URL_READER_MAX_BYTES:
+            raise ValueError("Webpage is too large to read safely.")
+
+        charset = response.headers.get_content_charset() or "utf-8"
+        try:
+            decoded = data.decode(charset, errors="replace")
+        except LookupError:
+            decoded = data.decode("utf-8", errors="replace")
+
+    if content_type == "text/plain":
+        title = urlparse(final_url).hostname or "Webpage"
+        text_content = "\n".join(
+            " ".join(line.split())
+            for line in decoded.splitlines()
+            if line.strip()
+        )
+    else:
+        parser = _ReadableHTMLParser()
+        parser.feed(decoded)
+        title = parser.get_title() or (urlparse(final_url).hostname or "Webpage")
+        text_content = parser.get_text()
+
+    if not text_content:
+        raise ValueError("No readable text was found on this webpage.")
+
+    return {
+        "title": title[:300],
+        "url": final_url,
+        "content": text_content[:URL_READER_MAX_TEXT],
+    }
+
+
+# =========================================================
 
 # TOOL SCHEMAS
 
@@ -4848,6 +5021,23 @@ tools = [
 
 
 
+# Website reader tool is appended separately to keep the main tool list simple.
+tools.append({
+    "type": "function",
+    "function": {
+        "name": "read_webpage",
+        "description": "Read the visible text content of a public website URL supplied by the user.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string"}
+            },
+            "required": ["url"]
+        }
+    }
+})
+
+
 
 SYSTEM_PROMPT = """
 
@@ -4872,6 +5062,8 @@ Capabilities:
 - CSV reading
 
 - PDF reading
+
+- website URL reading
 
 
 
@@ -4898,6 +5090,8 @@ explicitly asks you to remember something.
 When a file path is supplied,
 
 use the appropriate file-reading tool.
+
+When the user gives a public webpage URL and asks you to read, summarize, or analyze it, use read_webpage.
 
 
 
@@ -5988,6 +6182,15 @@ def execute_tool(
 
         )
 
+
+
+    if name == "read_webpage":
+
+        return read_webpage(
+
+            arguments["url"]
+
+        )
 
 
     return "Unknown tool"
@@ -7533,6 +7736,91 @@ def rag_ask(
 
     finally:
         db.close()
+
+
+# =========================================================
+# WEBSITE / URL READER API
+# =========================================================
+
+@app.post("/url/ask")
+def ask_webpage(
+    data: UrlReaderRequest,
+    authorization: Optional[str] = Header(None),
+):
+    get_current_user(authorization)
+
+    try:
+        page = read_webpage(data.url)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    except Exception as error:
+        print("URL READER ERROR:", str(error))
+        raise HTTPException(
+            status_code=502,
+            detail="Could not read this webpage. The site may block automated access.",
+        )
+
+    question = (data.question or "").strip()
+    if not question:
+        question = "Summarize this webpage clearly and concisely."
+
+    prompt = f"""
+You are analyzing a webpage for the user.
+
+Use ONLY the webpage content below for factual claims about the page.
+If the requested information is not present, say that it was not found on the webpage.
+Do not invent missing details.
+
+Page title: {page['title']}
+URL: {page['url']}
+
+User request:
+{question}
+
+Webpage content:
+{page['content']}
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model=OPENROUTER_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Answer from the supplied webpage content only.",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+        )
+
+        answer = (
+            response.choices[0].message.content
+            or "I could not generate a webpage answer."
+        )
+
+    except Exception as error:
+        error_text = str(error)
+        print("URL AI ERROR:", error_text)
+
+        if "429" in error_text or "Rate limit" in error_text:
+            raise HTTPException(
+                status_code=429,
+                detail="Free API limit reached. Please try again later.",
+            )
+
+        raise HTTPException(
+            status_code=502,
+            detail="AI could not analyze the webpage right now.",
+        )
+
+    return {
+        "title": page["title"],
+        "url": page["url"],
+        "answer": answer,
+    }
 
 
 # =========================================================
