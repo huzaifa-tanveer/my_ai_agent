@@ -6200,6 +6200,157 @@ def execute_tool(
 
 
 # =========================================================
+# SMART LONG-TERM MEMORY
+# =========================================================
+
+SMART_MEMORY_STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "is", "are", "was", "were",
+    "be", "been", "being", "to", "of", "in", "on", "for", "with", "at",
+    "by", "from", "as", "it", "this", "that", "these", "those", "i", "me",
+    "my", "mine", "you", "your", "yours", "we", "our", "ours", "they",
+    "their", "what", "which", "who", "how", "when", "where", "why", "do",
+    "does", "did", "can", "could", "would", "should", "will", "just",
+    "about", "tell", "please", "give", "show", "want", "need", "ka", "ki",
+    "ke", "hai", "hain", "tha", "thi", "ho", "aur", "se", "ko", "mera",
+    "meri", "mere", "mujhe", "kya", "kon", "kab", "kahan", "kyun",
+}
+
+
+def _memory_tokens(value):
+    return {
+        token
+        for token in re.findall(r"[A-Za-z0-9_\u0600-\u06FF]+", (value or "").lower())
+        if len(token) >= 3 and token not in SMART_MEMORY_STOPWORDS
+    }
+
+
+def _memory_score(query_tokens, text):
+    text_tokens = _memory_tokens(text)
+    if not query_tokens or not text_tokens:
+        return 0
+
+    overlap = len(query_tokens & text_tokens)
+    if overlap == 0:
+        return 0
+
+    return overlap * 10 + int((overlap / max(len(query_tokens), 1)) * 10)
+
+
+def get_smart_memory_context(username, query, exclude_chat_id=None):
+    """Return small, relevant cross-chat context for this user only."""
+    db = SessionLocal()
+
+    try:
+        query_tokens = _memory_tokens(query)
+        sections = []
+
+        explicit_items = (
+            db.query(UserMemory)
+            .filter(UserMemory.username == username)
+            .order_by(UserMemory.updated_at.desc())
+            .limit(20)
+            .all()
+        )
+
+        explicit_lines = []
+        for item in explicit_items:
+            combined = f"{item.memory_key}: {item.memory_value}"
+            score = _memory_score(query_tokens, combined)
+            if score > 0 or not query_tokens:
+                explicit_lines.append((score, combined))
+
+        explicit_lines.sort(key=lambda x: x[0], reverse=True)
+        explicit_lines = [text for _, text in explicit_lines[:8]]
+
+        if explicit_lines:
+            sections.append(
+                "Explicit saved memories:\n- " + "\n- ".join(explicit_lines)
+            )
+
+        history_query = (
+            db.query(Message, Chat.title)
+            .join(Chat, Message.chat_id == Chat.chat_id)
+            .filter(
+                Chat.username == username,
+                Message.role.in_(["user", "assistant"]),
+            )
+        )
+
+        if exclude_chat_id:
+            history_query = history_query.filter(Chat.chat_id != exclude_chat_id)
+
+        history_rows = (
+            history_query
+            .order_by(Message.id.desc())
+            .limit(250)
+            .all()
+        )
+
+        scored = []
+        seen = set()
+
+        for message, chat_title in history_rows:
+            content = (message.content or "").strip()
+            if not content:
+                continue
+
+            score = _memory_score(query_tokens, content)
+            if score <= 0:
+                continue
+
+            signature = (message.role, content[:300])
+            if signature in seen:
+                continue
+            seen.add(signature)
+
+            label = "User" if message.role == "user" else "Assistant"
+            snippet = content[:700]
+            scored.append((score, f"[{chat_title or 'Past chat'}] {label}: {snippet}"))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        history_lines = [text for _, text in scored[:6]]
+
+        if history_lines:
+            sections.append(
+                "Relevant past conversation excerpts:\n- " + "\n- ".join(history_lines)
+            )
+
+        if not sections:
+            return ""
+
+        return "\n\n".join(sections)[:6000]
+
+    finally:
+        db.close()
+
+
+def add_smart_memory_to_messages(model_messages, username, query, exclude_chat_id=None):
+    memory_context = get_smart_memory_context(
+        username=username,
+        query=query,
+        exclude_chat_id=exclude_chat_id,
+    )
+
+    if not memory_context:
+        return model_messages
+
+    memory_instruction = (
+        "Potentially relevant long-term memory for this user is provided below. "
+        "Use it only when it is actually relevant to the current request. "
+        "Prefer the user's current message if it conflicts with older context. "
+        "Do not claim certainty when the memory is ambiguous, and do not mention "
+        "that a retrieval system was used unless the user asks.\n\n"
+        + memory_context
+    )
+
+    return [
+        model_messages[0],
+        {"role": "system", "content": memory_instruction},
+        *model_messages[1:],
+    ]
+
+
+# =========================================================
 
 # AI
 
@@ -6687,6 +6838,13 @@ def chat_endpoint(
 
 
 
+        model_messages = add_smart_memory_to_messages(
+            model_messages,
+            username,
+            visible_message,
+            exclude_chat_id=request.chat_id,
+        )
+
         for item in (
 
             previous_messages
@@ -7046,6 +7204,13 @@ def regenerate_response(
                 "content": SYSTEM_PROMPT,
             }
         ]
+
+        model_messages = add_smart_memory_to_messages(
+            model_messages,
+            username,
+            last_user_message.content,
+            exclude_chat_id=chat_id,
+        )
 
         for item in messages[:last_user_index + 1]:
             if item.role in [
@@ -8025,6 +8190,13 @@ def chat_stream_endpoint(
                     "content": SYSTEM_PROMPT,
                 }
             ]
+
+            model_messages = add_smart_memory_to_messages(
+                model_messages,
+                username,
+                visible_message,
+                exclude_chat_id=request.chat_id,
+            )
 
             for item in previous_messages:
 
