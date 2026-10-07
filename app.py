@@ -167,6 +167,13 @@ OPENROUTER_MODEL = os.getenv(
 )
 
 
+ADMIN_USERNAMES = {
+    item.strip().lower()
+    for item in os.getenv("ADMIN_USERNAMES", "").split(",")
+    if item.strip()
+}
+
+
 
 SMTP_HOST = os.getenv("SMTP_HOST")
 
@@ -1690,6 +1697,32 @@ def get_current_user(
 
 
 
+
+# =========================================================
+# ADMIN HELPERS
+# =========================================================
+
+def is_admin_username(username: str) -> bool:
+    return bool(
+        username
+        and username.strip().lower() in ADMIN_USERNAMES
+    )
+
+
+def require_admin(
+    authorization: Optional[str],
+):
+    username = get_current_user(authorization)
+
+    if not is_admin_username(username):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required",
+        )
+
+    return username
+
+
 # =========================================================
 
 # REQUEST MODELS
@@ -2955,6 +2988,11 @@ def get_profile(
 
                     else None
 
+                ),
+
+            "is_admin":
+                is_admin_username(
+                    user.username
                 ),
 
         }
@@ -8157,6 +8195,101 @@ Webpage content:
         "url": page["url"],
         "answer": answer,
     }
+
+
+
+# =========================================================
+# ADMIN DASHBOARD
+# =========================================================
+
+@app.get("/admin/status")
+def admin_status(
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(authorization)
+
+    return {
+        "is_admin": is_admin_username(username),
+    }
+
+
+@app.get("/admin/stats")
+def admin_stats(
+    authorization: Optional[str] = Header(None),
+):
+    require_admin(authorization)
+
+    db = SessionLocal()
+
+    try:
+        return {
+            "users": db.query(User).count(),
+            "verified_users": (
+                db.query(User)
+                .filter(User.email_verified == True)
+                .count()
+            ),
+            "chats": db.query(Chat).count(),
+            "messages": db.query(Message).count(),
+            "documents": db.query(RagDocument).count(),
+            "rag_chunks": db.query(RagChunk).count(),
+            "memories": db.query(UserMemory).count(),
+        }
+
+    finally:
+        db.close()
+
+
+@app.get("/admin/users")
+def admin_users(
+    authorization: Optional[str] = Header(None),
+):
+    require_admin(authorization)
+
+    db = SessionLocal()
+
+    try:
+        users = (
+            db.query(User)
+            .order_by(User.created_at.desc())
+            .all()
+        )
+
+        output = []
+
+        for user in users:
+            output.append({
+                "username": user.username,
+                "email": user.email,
+                "email_verified": user.email_verified,
+                "created_at": (
+                    user.created_at.isoformat()
+                    if user.created_at
+                    else None
+                ),
+                "chat_count": (
+                    db.query(Chat)
+                    .filter(Chat.username == user.username)
+                    .count()
+                ),
+                "document_count": (
+                    db.query(RagDocument)
+                    .filter(RagDocument.username == user.username)
+                    .count()
+                ),
+                "memory_count": (
+                    db.query(UserMemory)
+                    .filter(UserMemory.username == user.username)
+                    .count()
+                ),
+            })
+
+        return {
+            "users": output,
+        }
+
+    finally:
+        db.close()
 
 
 # =========================================================
