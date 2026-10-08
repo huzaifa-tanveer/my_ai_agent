@@ -21,6 +21,8 @@ import smtplib
 import shutil
 import io
 import math
+import time
+import threading
 import ipaddress
 import socket
 from html.parser import HTMLParser
@@ -30,6 +32,7 @@ from urllib.request import Request, build_opener, HTTPRedirectHandler
 import json
 
 from typing import Optional
+from collections import defaultdict, deque
 
 from fastapi import Header, HTTPException
 
@@ -53,6 +56,7 @@ from ddgs import DDGS
 from fastapi import (
 
     FastAPI,
+    Request,
 
     UploadFile,
 
@@ -68,7 +72,7 @@ from fastapi import (
 
 from fastapi.middleware.cors import CORSMiddleware
 
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 
 
 
@@ -173,6 +177,42 @@ RAG_EMBEDDING_MODEL = os.getenv(
     "RAG_EMBEDDING_MODEL",
     "nvidia/llama-nemotron-embed-vl-1b-v2:free",
 )
+
+
+
+
+# =========================================================
+# SECURITY SETTINGS
+# =========================================================
+
+MAX_UPLOAD_BYTES = int(
+    os.getenv(
+        "MAX_UPLOAD_BYTES",
+        str(10 * 1024 * 1024),
+    )
+)
+
+MAX_REQUEST_BYTES = int(
+    os.getenv(
+        "MAX_REQUEST_BYTES",
+        str(12 * 1024 * 1024),
+    )
+)
+
+ALLOWED_ORIGINS = [
+    item.strip()
+    for item in os.getenv(
+        "ALLOWED_ORIGINS",
+        (
+            "https://myaiagent-production-649a.up.railway.app,"
+            "http://127.0.0.1:8000,"
+            "http://localhost:8000,"
+            "http://127.0.0.1:5500,"
+            "http://localhost:5500"
+        ),
+    ).split(",")
+    if item.strip()
+]
 
 
 ADMIN_USERNAMES = {
@@ -323,6 +363,238 @@ app.add_middleware(
 
 
 
+
+
+
+
+# =========================================================
+# SECURITY MIDDLEWARE
+# =========================================================
+
+_rate_limit_store = defaultdict(deque)
+_rate_limit_lock = threading.Lock()
+
+
+def _security_client_key(request):
+    authorization = (
+        request.headers.get(
+            "authorization",
+            "",
+        )
+    )
+
+    if authorization.startswith("Bearer "):
+        digest = hashlib.sha256(
+            authorization.encode()
+        ).hexdigest()
+
+        return "token:" + digest[:24]
+
+    forwarded = (
+        request.headers.get(
+            "x-forwarded-for",
+            ""
+        )
+        .split(",")[0]
+        .strip()
+    )
+
+    if forwarded:
+        return "ip:" + forwarded
+
+    if request.client:
+        return (
+            "ip:"
+            + request.client.host
+        )
+
+    return "ip:unknown"
+
+
+def _rate_limit_for_path(path):
+
+    auth_paths = {
+        "/login",
+        "/register",
+        "/forgot-password",
+        "/reset-password",
+        "/verify-email",
+        "/resend-verification-code",
+    }
+
+    if path in auth_paths:
+        return 10, 60
+
+    if path in {
+        "/chat",
+        "/chat/stream",
+        "/rag/ask",
+        "/rag/reindex",
+        "/url/ask",
+    }:
+        return 30, 60
+
+    if path in {
+        "/upload",
+        "/rag/upload",
+    }:
+        return 10, 60
+
+    return None
+
+
+def _is_rate_limited(
+    key,
+    path,
+):
+    limit_config = (
+        _rate_limit_for_path(
+            path
+        )
+    )
+
+    if not limit_config:
+        return False
+
+    limit, window_seconds = (
+        limit_config
+    )
+
+    now = time.time()
+
+    store_key = (
+        key,
+        path,
+    )
+
+    with _rate_limit_lock:
+
+        events = (
+            _rate_limit_store[
+                store_key
+            ]
+        )
+
+        cutoff = (
+            now
+            - window_seconds
+        )
+
+        while (
+            events
+            and events[0] < cutoff
+        ):
+            events.popleft()
+
+        if len(events) >= limit:
+            return True
+
+        events.append(now)
+
+    return False
+
+
+@app.middleware("http")
+async def security_middleware(
+    request: Request,
+    call_next,
+):
+
+    # -----------------------------
+    # Request-size protection
+    # -----------------------------
+
+    content_length = (
+        request.headers.get(
+            "content-length"
+        )
+    )
+
+    if content_length:
+
+        try:
+            request_size = int(
+                content_length
+            )
+
+            if (
+                request_size
+                > MAX_REQUEST_BYTES
+            ):
+                return JSONResponse(
+                    status_code=413,
+                    content={
+                        "detail":
+                            "Request is too large."
+                    },
+                )
+
+        except ValueError:
+            pass
+
+
+    # -----------------------------
+    # Basic rate limiting
+    # -----------------------------
+
+    client_key = (
+        _security_client_key(
+            request
+        )
+    )
+
+    if _is_rate_limited(
+        client_key,
+        request.url.path,
+    ):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": (
+                    "Too many requests. "
+                    "Please try again shortly."
+                )
+            },
+            headers={
+                "Retry-After": "60"
+            },
+        )
+
+
+    response = await call_next(
+        request
+    )
+
+
+    # -----------------------------
+    # Security headers
+    # -----------------------------
+
+    response.headers[
+        "X-Content-Type-Options"
+    ] = "nosniff"
+
+    response.headers[
+        "X-Frame-Options"
+    ] = "DENY"
+
+    response.headers[
+        "Referrer-Policy"
+    ] = "strict-origin-when-cross-origin"
+
+    response.headers[
+        "Permissions-Policy"
+    ] = (
+        "camera=(), "
+        "geolocation=(), "
+        "payment=()"
+    )
+
+    response.headers[
+        "Cross-Origin-Opener-Policy"
+    ] = "same-origin"
+
+    return response
 
 
 # =========================================================
@@ -4389,6 +4661,46 @@ def get_user_memory(
 
 
 
+
+
+def validate_user_upload_path(
+    username,
+    file_path,
+):
+    if not username or not file_path:
+        return None
+
+    base_folder = os.path.abspath(
+        os.path.join(
+            UPLOAD_DIR,
+            username,
+        )
+    )
+
+    target_path = os.path.abspath(
+        file_path
+    )
+
+    try:
+        common = os.path.commonpath([
+            base_folder,
+            target_path,
+        ])
+    except ValueError:
+        return None
+
+    if common != base_folder:
+        return None
+
+    if not os.path.isfile(
+        target_path
+    ):
+        return None
+
+    return target_path
+
+
+
 def read_text_file(
 
     file_path,
@@ -8007,7 +8319,18 @@ async def rag_upload_document(
         )
     )
 
-    content = await file.read()
+    content = await file.read(
+        MAX_UPLOAD_BYTES + 1
+    )
+
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                "File is too large. "
+                "Maximum upload size is 10 MB."
+            ),
+        )
 
     if not content:
         raise HTTPException(
@@ -8032,8 +8355,7 @@ async def rag_upload_document(
         raise HTTPException(
             status_code=400,
             detail=(
-                "Could not read document: "
-                + str(error)
+                "Could not read this document."
             ),
         )
 
@@ -8385,8 +8707,8 @@ def rag_ask(
         raise HTTPException(
             status_code=502,
             detail=(
-                "RAG answer error: "
-                + str(error)
+                "Could not generate a "
+                "document-based answer."
             ),
         )
 
@@ -8525,8 +8847,7 @@ def rag_reindex_embeddings(
         raise HTTPException(
             status_code=502,
             detail=(
-                "Could not generate embeddings: "
-                + str(error)
+                "Could not generate document embeddings."
             ),
         )
 
