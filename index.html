@@ -209,6 +209,88 @@ if (finalRagFileInput) {
 }
 
 
+
+
+/* =====================================
+   AUTH SHOWCASE PANEL
+===================================== */
+
+(function setupAuthShowcase() {
+
+    const screens = document.querySelectorAll(
+        ".auth-screen"
+    );
+
+    screens.forEach(screen => {
+
+        if (
+            screen.querySelector(
+                ".auth-showcase"
+            )
+        ) {
+            return;
+        }
+
+        const panel =
+            document.createElement(
+                "div"
+            );
+
+        panel.className =
+            "auth-showcase";
+
+        panel.innerHTML = `
+            <div class="auth-showcase-badge">
+                ✨ AI-Powered Workspace
+            </div>
+
+            <h3>
+                Work smarter with your
+                <span>personal AI assistant.</span>
+            </h3>
+
+            <p>
+                Chat with AI, analyze documents,
+                search the web, use persistent memory
+                and manage your knowledge from one
+                secure workspace.
+            </p>
+
+            <div class="auth-feature-list">
+
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">💬</div>
+                    <div>Real-time AI Chat</div>
+                </div>
+
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">📚</div>
+                    <div>Document RAG</div>
+                </div>
+
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">🧠</div>
+                    <div>Smart Memory</div>
+                </div>
+
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">🌐</div>
+                    <div>Website Analysis</div>
+                </div>
+
+            </div>
+        `;
+
+        screen.insertBefore(
+            panel,
+            screen.firstChild
+        );
+
+    });
+
+})();
+
+
 </script>
 
 <style>
@@ -2844,6 +2926,239 @@ button:disabled {
     .auth-subtitle {
         font-size: 13px;
         margin-bottom: 21px;
+    }
+}
+
+
+
+
+/* =====================================
+   AUTH DESKTOP SPLIT LAYOUT
+===================================== */
+
+.auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 65px;
+
+    padding:
+        45px
+        clamp(35px, 7vw, 110px);
+}
+
+
+.auth-showcase {
+    width: min(520px, 44vw);
+
+    color: #f8fafc;
+
+    position: relative;
+    z-index: 2;
+}
+
+
+.auth-showcase-badge {
+    display: inline-flex;
+
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 13px;
+
+    margin-bottom: 24px;
+
+    border:
+        1px solid
+        rgba(148,163,184,.20);
+
+    border-radius: 30px;
+
+    background:
+        rgba(255,255,255,.05);
+
+    color:
+        #93c5fd;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+.auth-showcase h3 {
+    max-width: 500px;
+
+    margin-bottom: 17px;
+
+    font-size:
+        clamp(
+            34px,
+            4vw,
+            52px
+        );
+
+    line-height: 1.08;
+
+    letter-spacing:
+        -1.5px;
+
+    color: white;
+}
+
+
+.auth-showcase h3 span {
+    background:
+        linear-gradient(
+            90deg,
+            #60a5fa,
+            #818cf8,
+            #c084fc
+        );
+
+    -webkit-background-clip:
+        text;
+
+    background-clip:
+        text;
+
+    color: transparent;
+}
+
+
+.auth-showcase > p {
+    max-width: 470px;
+
+    margin-bottom: 30px;
+
+    color:
+        #94a3b8;
+
+    font-size: 15px;
+
+    line-height: 1.7;
+}
+
+
+.auth-feature-list {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0,1fr)
+        );
+
+    gap: 12px;
+
+    max-width: 500px;
+}
+
+
+.auth-feature {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 13px 14px;
+
+    border:
+        1px solid
+        rgba(148,163,184,.14);
+
+    border-radius: 12px;
+
+    background:
+        rgba(255,255,255,.035);
+
+    color:
+        #cbd5e1;
+
+    font-size: 13px;
+
+    backdrop-filter:
+        blur(8px);
+}
+
+
+.auth-feature-icon {
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 9px;
+
+    background:
+        rgba(99,102,241,.15);
+
+    color:
+        #93c5fd;
+}
+
+
+.auth-screen .auth-card {
+    flex-shrink: 0;
+
+    width: 100%;
+    max-width: 430px;
+
+    margin: 0;
+}
+
+
+/* Medium laptops */
+
+@media(max-width: 1000px) {
+
+    .auth-screen {
+        gap: 35px;
+
+        padding:
+            35px
+            28px;
+    }
+
+    .auth-showcase {
+        width: 45%;
+    }
+
+    .auth-showcase h3 {
+        font-size: 36px;
+    }
+
+    .auth-feature-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* Tablet / mobile */
+
+@media(max-width: 800px) {
+
+    .auth-screen {
+        display: flex;
+
+        padding: 20px;
+
+        justify-content: center;
+    }
+
+    .auth-showcase {
+        display: none;
+    }
+
+    .auth-screen .auth-card {
+        max-width: 440px;
     }
 }
 
