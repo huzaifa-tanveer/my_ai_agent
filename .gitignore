@@ -15,3 +15,14 @@ index_final_backup.html
 
 data.csv
 test.txt
+# Local patch scripts
+add_admin_analytics.py
+add_admin_frontend.py
+add_admin_user_details.py
+add_better_rag.py
+add_final_ui_polish.py
+add_security_hardening.py
+
+# Local backup files
+app_before_*.py
+index_before_*.html
