@@ -8459,6 +8459,226 @@ def admin_user_details(
 
 # =========================================================
 
+
+@app.get("/admin/analytics")
+def admin_analytics(
+    authorization: Optional[str] = Header(None),
+):
+    require_admin(authorization)
+
+    db = SessionLocal()
+
+    try:
+
+        today = datetime.utcnow().date()
+
+        daily = []
+
+        for offset in range(6, -1, -1):
+
+            day = today - timedelta(days=offset)
+
+            start = datetime.combine(
+                day,
+                datetime.min.time(),
+            )
+
+            end = start + timedelta(days=1)
+
+            users_count = (
+                db.query(User)
+                .filter(
+                    User.created_at >= start,
+                    User.created_at < end,
+                )
+                .count()
+            )
+
+            chats_count = (
+                db.query(Chat)
+                .filter(
+                    Chat.created_at >= start,
+                    Chat.created_at < end,
+                )
+                .count()
+            )
+
+            messages_count = (
+                db.query(Message)
+                .filter(
+                    Message.created_at >= start,
+                    Message.created_at < end,
+                )
+                .count()
+            )
+
+            daily.append({
+                "date": day.isoformat(),
+                "users": users_count,
+                "chats": chats_count,
+                "messages": messages_count,
+            })
+
+
+        recent_activity = []
+
+
+        recent_users = (
+            db.query(User)
+            .order_by(
+                User.created_at.desc()
+            )
+            .limit(5)
+            .all()
+        )
+
+        for user in recent_users:
+
+            recent_activity.append({
+                "type": "user",
+                "title": (
+                    "New user: "
+                    + user.username
+                ),
+                "username": user.username,
+                "created_at": (
+                    user.created_at.isoformat()
+                    if user.created_at
+                    else None
+                ),
+            })
+
+
+        recent_chats = (
+            db.query(Chat)
+            .order_by(
+                Chat.created_at.desc()
+            )
+            .limit(5)
+            .all()
+        )
+
+        for chat in recent_chats:
+
+            recent_activity.append({
+                "type": "chat",
+                "title": (
+                    "New chat: "
+                    + (
+                        chat.title
+                        or "New Chat"
+                    )
+                ),
+                "username": chat.username,
+                "created_at": (
+                    chat.created_at.isoformat()
+                    if chat.created_at
+                    else None
+                ),
+            })
+
+
+        recent_messages = (
+            db.query(
+                Message,
+                Chat.username,
+            )
+            .join(
+                Chat,
+                Message.chat_id
+                == Chat.chat_id,
+            )
+            .order_by(
+                Message.created_at.desc()
+            )
+            .limit(5)
+            .all()
+        )
+
+        for message, username in recent_messages:
+
+            recent_activity.append({
+                "type": "message",
+                "title": (
+                    "New "
+                    + (
+                        message.role
+                        or "message"
+                    )
+                    + " message"
+                ),
+                "username": username,
+                "created_at": (
+                    message.created_at.isoformat()
+                    if message.created_at
+                    else None
+                ),
+            })
+
+
+        recent_activity.sort(
+            key=lambda item: (
+                item.get("created_at")
+                or ""
+            ),
+            reverse=True,
+        )
+
+
+        last_7_days = (
+            today - timedelta(days=6)
+        )
+
+        last_7_start = datetime.combine(
+            last_7_days,
+            datetime.min.time(),
+        )
+
+
+        return {
+
+            "daily": daily,
+
+            "last_7_days": {
+
+                "new_users": (
+                    db.query(User)
+                    .filter(
+                        User.created_at
+                        >= last_7_start
+                    )
+                    .count()
+                ),
+
+                "new_chats": (
+                    db.query(Chat)
+                    .filter(
+                        Chat.created_at
+                        >= last_7_start
+                    )
+                    .count()
+                ),
+
+                "new_messages": (
+                    db.query(Message)
+                    .filter(
+                        Message.created_at
+                        >= last_7_start
+                    )
+                    .count()
+                ),
+
+            },
+
+            "recent_activity":
+                recent_activity[:12],
+
+        }
+
+    finally:
+        db.close()
+
+
 # HEALTH
 
 # =========================================================

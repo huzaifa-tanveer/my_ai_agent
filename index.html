@@ -1733,6 +1733,133 @@ input {
     }
 }
 
+
+
+/* =====================================
+   ADMIN ANALYTICS
+===================================== */
+
+.admin-analytics-section {
+    margin: 24px 0;
+}
+
+.admin-analytics-title {
+    margin-bottom: 12px;
+}
+
+.admin-analytics-summary {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.admin-analytics-mini {
+    border: 1px solid var(--border-light);
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.admin-analytics-mini-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.admin-analytics-mini-value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.admin-chart {
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 16px;
+    background: var(--surface-2);
+    margin-bottom: 16px;
+}
+
+.admin-chart-title {
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.admin-chart-row {
+    display: grid;
+    grid-template-columns:
+        80px 1fr 42px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.admin-chart-date {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.admin-chart-track {
+    height: 11px;
+    background: var(--border-light);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.admin-chart-bar {
+    height: 100%;
+    min-width: 2px;
+    background: #3b82f6;
+    border-radius: 20px;
+}
+
+.admin-chart-count {
+    text-align: right;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.admin-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-activity-item {
+    border: 1px solid var(--border-light);
+    background: var(--surface-2);
+    border-radius: 9px;
+    padding: 10px 12px;
+}
+
+.admin-activity-title {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.admin-activity-meta {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+@media(max-width: 650px) {
+
+    .admin-analytics-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-chart-row {
+        grid-template-columns:
+            68px 1fr 35px;
+    }
+}
+
+
 </style>
 </head>
 
@@ -2457,6 +2584,124 @@ input {
     >
         -
     </div>
+</div>
+
+</div>
+
+
+
+
+<div class="admin-analytics-section">
+
+<h3 class="admin-analytics-title">
+    📊 Usage Analytics — Last 7 Days
+</h3>
+
+
+<div class="admin-analytics-summary">
+
+<div class="admin-analytics-mini">
+
+<div class="admin-analytics-mini-label">
+    New Users
+</div>
+
+<div
+    id="analyticsUsers7"
+    class="admin-analytics-mini-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-analytics-mini">
+
+<div class="admin-analytics-mini-label">
+    New Chats
+</div>
+
+<div
+    id="analyticsChats7"
+    class="admin-analytics-mini-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-analytics-mini">
+
+<div class="admin-analytics-mini-label">
+    New Messages
+</div>
+
+<div
+    id="analyticsMessages7"
+    class="admin-analytics-mini-value"
+>
+    -
+</div>
+
+</div>
+
+</div>
+
+
+<div class="admin-chart">
+
+<div class="admin-chart-title">
+    👤 Daily New Users
+</div>
+
+<div id="analyticsUsersChart">
+    Loading...
+</div>
+
+</div>
+
+
+<div class="admin-chart">
+
+<div class="admin-chart-title">
+    💬 Daily Chats
+</div>
+
+<div id="analyticsChatsChart">
+    Loading...
+</div>
+
+</div>
+
+
+<div class="admin-chart">
+
+<div class="admin-chart-title">
+    ✉ Daily Messages
+</div>
+
+<div id="analyticsMessagesChart">
+    Loading...
+</div>
+
+</div>
+
+
+<div class="admin-chart">
+
+<div class="admin-chart-title">
+    🕒 Recent Activity
+</div>
+
+<div
+    id="adminRecentActivity"
+    class="admin-activity-list"
+>
+    Loading...
+</div>
+
 </div>
 
 </div>
@@ -7453,6 +7698,9 @@ async function openAdminDashboard() {
         );
 
 
+        await loadAdminAnalytics();
+
+
         setMessage(
             "adminMessage",
             "Dashboard loaded.",
@@ -7961,6 +8209,422 @@ function closeAdminUserDetails() {
         .add(
             "hidden"
         );
+
+}
+
+
+
+
+async function loadAdminAnalytics() {
+
+    try {
+
+        const response =
+            await request(
+                "/admin/analytics"
+            );
+
+
+        const data =
+            await parseResponse(
+                response
+            );
+
+
+        const totals =
+            data.last_7_days || {};
+
+
+        document
+            .getElementById(
+                "analyticsUsers7"
+            )
+            .textContent =
+                totals.new_users
+                ?? 0;
+
+
+        document
+            .getElementById(
+                "analyticsChats7"
+            )
+            .textContent =
+                totals.new_chats
+                ?? 0;
+
+
+        document
+            .getElementById(
+                "analyticsMessages7"
+            )
+            .textContent =
+                totals.new_messages
+                ?? 0;
+
+
+        const daily =
+            data.daily || [];
+
+
+        renderAdminChart(
+            "analyticsUsersChart",
+            daily,
+            "users"
+        );
+
+
+        renderAdminChart(
+            "analyticsChatsChart",
+            daily,
+            "chats"
+        );
+
+
+        renderAdminChart(
+            "analyticsMessagesChart",
+            daily,
+            "messages"
+        );
+
+
+        renderAdminActivity(
+            data.recent_activity || []
+        );
+
+
+    } catch (error) {
+
+        const activity =
+            document.getElementById(
+                "adminRecentActivity"
+            );
+
+
+        if (activity) {
+
+            activity.textContent =
+                error.message
+                || "Could not load analytics.";
+
+        }
+
+    }
+
+}
+
+
+function renderAdminChart(
+    elementId,
+    items,
+    field
+) {
+
+    const container =
+        document.getElementById(
+            elementId
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    if (!items.length) {
+
+        container.textContent =
+            "No analytics data.";
+
+        return;
+
+    }
+
+
+    const values =
+        items.map(
+            item =>
+                Number(
+                    item[field] || 0
+                )
+        );
+
+
+    const maxValue =
+        Math.max(
+            ...values,
+            1
+        );
+
+
+    items.forEach(
+        item => {
+
+            const count =
+                Number(
+                    item[field] || 0
+                );
+
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            row.className =
+                "admin-chart-row";
+
+
+            const date =
+                document.createElement(
+                    "div"
+                );
+
+
+            date.className =
+                "admin-chart-date";
+
+
+            const parsedDate =
+                item.date
+                    ? new Date(
+                        item.date
+                        + "T00:00:00"
+                    )
+                    : null;
+
+
+            date.textContent =
+                parsedDate
+                    ? parsedDate
+                        .toLocaleDateString(
+                            undefined,
+                            {
+                                month: "short",
+                                day: "numeric"
+                            }
+                        )
+                    : "-";
+
+
+            const track =
+                document.createElement(
+                    "div"
+                );
+
+
+            track.className =
+                "admin-chart-track";
+
+
+            const bar =
+                document.createElement(
+                    "div"
+                );
+
+
+            bar.className =
+                "admin-chart-bar";
+
+
+            bar.style.width =
+                (
+                    count === 0
+                        ? 0
+                        : Math.max(
+                            5,
+                            (
+                                count
+                                / maxValue
+                            )
+                            * 100
+                        )
+                )
+                + "%";
+
+
+            track.appendChild(
+                bar
+            );
+
+
+            const countElement =
+                document.createElement(
+                    "div"
+                );
+
+
+            countElement.className =
+                "admin-chart-count";
+
+
+            countElement.textContent =
+                String(count);
+
+
+            row.appendChild(
+                date
+            );
+
+
+            row.appendChild(
+                track
+            );
+
+
+            row.appendChild(
+                countElement
+            );
+
+
+            container.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+
+function renderAdminActivity(
+    items
+) {
+
+    const container =
+        document.getElementById(
+            "adminRecentActivity"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    if (!items.length) {
+
+        container.textContent =
+            "No recent activity.";
+
+        return;
+
+    }
+
+
+    items.forEach(
+        item => {
+
+            const wrapper =
+                document.createElement(
+                    "div"
+                );
+
+
+            wrapper.className =
+                "admin-activity-item";
+
+
+            const title =
+                document.createElement(
+                    "div"
+                );
+
+
+            title.className =
+                "admin-activity-title";
+
+
+            let icon = "•";
+
+
+            if (
+                item.type === "user"
+            ) {
+
+                icon = "👤";
+
+            } else if (
+                item.type === "chat"
+            ) {
+
+                icon = "💬";
+
+            } else if (
+                item.type === "message"
+            ) {
+
+                icon = "✉";
+
+            }
+
+
+            title.textContent =
+                icon
+                + " "
+                + (
+                    item.title
+                    || "Activity"
+                );
+
+
+            const meta =
+                document.createElement(
+                    "div"
+                );
+
+
+            meta.className =
+                "admin-activity-meta";
+
+
+            const username =
+                item.username
+                    ? "@"
+                        + item.username
+                    : "";
+
+
+            const time =
+                item.created_at
+                    ? new Date(
+                        item.created_at
+                    ).toLocaleString()
+                    : "";
+
+
+            meta.textContent =
+                username
+                + (
+                    username && time
+                        ? " • "
+                        : ""
+                )
+                + time;
+
+
+            wrapper.appendChild(
+                title
+            );
+
+
+            wrapper.appendChild(
+                meta
+            );
+
+
+            container.appendChild(
+                wrapper
+            );
+
+        }
+    );
 
 }
 
