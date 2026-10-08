@@ -20,6 +20,7 @@ import smtplib
 
 import shutil
 import io
+import math
 import ipaddress
 import socket
 from html.parser import HTMLParser
@@ -164,6 +165,13 @@ OPENROUTER_MODEL = os.getenv(
 
     "openrouter/free",
 
+)
+
+
+
+RAG_EMBEDDING_MODEL = os.getenv(
+    "RAG_EMBEDDING_MODEL",
+    "nvidia/llama-nemotron-embed-vl-1b-v2:free",
 )
 
 
@@ -988,6 +996,11 @@ class RagChunk(Base):
         nullable=False,
     )
 
+    embedding = Column(
+        Text,
+        nullable=True,
+    )
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow,
@@ -1081,6 +1094,18 @@ with engine.begin() as connection:
 
 
 
+
+
+
+    connection.execute(
+        text(
+            """
+            ALTER TABLE rag_chunks
+            ADD COLUMN IF NOT EXISTS
+            embedding TEXT
+            """
+        )
+    )
 
 
 # =========================================================
@@ -7612,6 +7637,124 @@ def chunk_rag_text(
     return chunks
 
 
+
+
+def create_rag_embeddings(
+    texts,
+    batch_size=24,
+):
+    """
+    Create embeddings through the existing
+    OpenRouter/OpenAI-compatible client.
+    """
+
+    if not texts:
+        return []
+
+    all_vectors = []
+
+    for start in range(
+        0,
+        len(texts),
+        batch_size,
+    ):
+        batch = texts[
+            start:
+            start + batch_size
+        ]
+
+        response = client.embeddings.create(
+            model=RAG_EMBEDDING_MODEL,
+            input=batch,
+            encoding_format="float",
+        )
+
+        batch_vectors = [
+            item.embedding
+            for item in response.data
+        ]
+
+        if len(batch_vectors) != len(batch):
+            raise RuntimeError(
+                "Embedding API returned an unexpected result."
+            )
+
+        all_vectors.extend(
+            batch_vectors
+        )
+
+    return all_vectors
+
+
+def parse_rag_embedding(
+    value,
+):
+    if not value:
+        return None
+
+    try:
+        vector = json.loads(value)
+
+        if not isinstance(
+            vector,
+            list,
+        ):
+            return None
+
+        return [
+            float(item)
+            for item in vector
+        ]
+
+    except Exception:
+        return None
+
+
+def cosine_similarity(
+    first,
+    second,
+):
+    if (
+        not first
+        or not second
+        or len(first) != len(second)
+    ):
+        return 0.0
+
+    dot = sum(
+        a * b
+        for a, b in zip(
+            first,
+            second,
+        )
+    )
+
+    first_norm = math.sqrt(
+        sum(
+            value * value
+            for value in first
+        )
+    )
+
+    second_norm = math.sqrt(
+        sum(
+            value * value
+            for value in second
+        )
+    )
+
+    denominator = (
+        first_norm
+        * second_norm
+    )
+
+    if denominator <= 0:
+        return 0.0
+
+    return dot / denominator
+
+
+
 def rag_tokens(text_value):
     return re.findall(
         r"[\w]+",
@@ -7685,24 +7828,122 @@ def retrieve_rag_chunks(
 
     if document_id:
         query = query.filter(
-            RagChunk.document_id == document_id
+            RagChunk.document_id
+            == document_id
         )
 
     rows = query.all()
+
+    if not rows:
+        return []
+
+    # ---------------------------------
+    # Query semantic embedding
+    # ---------------------------------
+
+    query_embedding = None
+
+    try:
+        vectors = create_rag_embeddings(
+            [question]
+        )
+
+        if vectors:
+            query_embedding = vectors[0]
+
+    except Exception as error:
+        print(
+            "RAG QUERY EMBEDDING ERROR:",
+            str(error),
+        )
+
+        # Keyword retrieval still works.
+
+
     scored = []
 
     for chunk, document in rows:
-        score = score_rag_chunk(
+
+        # ---------------------------------
+        # Existing lexical score
+        # ---------------------------------
+
+        keyword_score = score_rag_chunk(
             question,
             chunk.content,
         )
 
-        if score > 0:
+        # Existing keyword score can exceed
+        # 1 because of exact-match bonus.
+        # Normalize it before hybrid scoring.
+
+        normalized_keyword = min(
+            max(keyword_score, 0.0)
+            / 1.5,
+            1.0,
+        )
+
+
+        # ---------------------------------
+        # Semantic similarity
+        # ---------------------------------
+
+        semantic_score = 0.0
+
+        stored_embedding = (
+            parse_rag_embedding(
+                chunk.embedding
+            )
+        )
+
+        if (
+            query_embedding
+            and stored_embedding
+        ):
+            semantic_score = (
+                cosine_similarity(
+                    query_embedding,
+                    stored_embedding,
+                )
+            )
+
+            semantic_score = max(
+                semantic_score,
+                0.0,
+            )
+
+
+        # ---------------------------------
+        # Hybrid score
+        # ---------------------------------
+
+        if (
+            query_embedding
+            and stored_embedding
+        ):
+            final_score = (
+                semantic_score
+                * 0.75
+                +
+                normalized_keyword
+                * 0.25
+            )
+
+        else:
+            # Old documents or API failure:
+            # preserve keyword retrieval.
+            final_score = (
+                normalized_keyword
+            )
+
+
+        if final_score > 0:
             scored.append((
-                score,
+                final_score,
                 chunk,
                 document,
             ))
+
 
     scored.sort(
         key=lambda item: item[0],
@@ -7710,6 +7951,7 @@ def retrieve_rag_chunks(
     )
 
     return scored[:top_k]
+
 
 
 @app.post("/rag/upload")
@@ -7817,6 +8059,38 @@ async def rag_upload_document(
             detail="Could not create document chunks.",
         )
 
+    # Generate semantic embeddings.
+    # If the free embedding service is temporarily
+    # unavailable, document upload still succeeds
+    # and keyword retrieval remains available.
+
+    chunk_embeddings = [
+        None
+        for _ in chunks
+    ]
+
+    try:
+        generated_embeddings = (
+            create_rag_embeddings(
+                chunks
+            )
+        )
+
+        if (
+            len(generated_embeddings)
+            == len(chunks)
+        ):
+            chunk_embeddings = (
+                generated_embeddings
+            )
+
+    except Exception as error:
+        print(
+            "RAG DOCUMENT EMBEDDING ERROR:",
+            str(error),
+        )
+
+
     db = SessionLocal()
 
     try:
@@ -7838,6 +8112,14 @@ async def rag_upload_document(
                     username=username,
                     chunk_index=index,
                     content=chunk,
+                    embedding=(
+                        json.dumps(
+                            chunk_embeddings[index]
+                        )
+                        if chunk_embeddings[index]
+                        is not None
+                        else None
+                    ),
                 )
             )
 
@@ -8110,6 +8392,147 @@ def rag_ask(
 
     finally:
         db.close()
+
+
+
+
+@app.post("/rag/reindex")
+def rag_reindex_embeddings(
+    authorization: Optional[str] = Header(None),
+):
+    username = get_current_user(
+        authorization
+    )
+
+    db = SessionLocal()
+
+    try:
+
+        chunks = (
+            db.query(RagChunk)
+            .filter(
+                RagChunk.username
+                == username
+            )
+            .order_by(
+                RagChunk.id.asc()
+            )
+            .all()
+        )
+
+        if not chunks:
+            return {
+                "success": True,
+                "updated": 0,
+                "message":
+                    "No RAG chunks found.",
+            }
+
+
+        pending = [
+            chunk
+            for chunk in chunks
+            if not chunk.embedding
+        ]
+
+
+        if not pending:
+            return {
+                "success": True,
+                "updated": 0,
+                "message":
+                    "All chunks already have embeddings.",
+            }
+
+
+        updated = 0
+        batch_size = 24
+
+
+        for start in range(
+            0,
+            len(pending),
+            batch_size,
+        ):
+
+            batch_chunks = pending[
+                start:
+                start + batch_size
+            ]
+
+
+            texts = [
+                chunk.content
+                for chunk in batch_chunks
+            ]
+
+
+            vectors = (
+                create_rag_embeddings(
+                    texts,
+                    batch_size=batch_size,
+                )
+            )
+
+
+            if (
+                len(vectors)
+                != len(batch_chunks)
+            ):
+                raise RuntimeError(
+                    "Embedding result count mismatch."
+                )
+
+
+            for chunk, vector in zip(
+                batch_chunks,
+                vectors,
+            ):
+
+                chunk.embedding = (
+                    json.dumps(vector)
+                )
+
+                updated += 1
+
+
+            db.commit()
+
+
+        return {
+            "success": True,
+            "updated": updated,
+            "message": (
+                f"{updated} RAG chunks reindexed "
+                "with semantic embeddings."
+            ),
+        }
+
+
+    except HTTPException:
+        db.rollback()
+        raise
+
+    except Exception as error:
+
+        db.rollback()
+
+        print(
+            "RAG REINDEX ERROR:",
+            str(error),
+        )
+
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Could not generate embeddings: "
+                + str(error)
+            ),
+        )
+
+    finally:
+        db.close()
+
 
 
 # =========================================================
