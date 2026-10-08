@@ -8292,6 +8292,171 @@ def admin_users(
         db.close()
 
 
+@app.get("/admin/users/{target_username}")
+def admin_user_details(
+    target_username: str,
+    authorization: Optional[str] = Header(None),
+):
+    require_admin(authorization)
+
+    clean_username = (
+        target_username
+        .strip()
+        .lower()
+    )
+
+    db = SessionLocal()
+
+    try:
+
+        user = (
+            db.query(User)
+            .filter(
+                User.username
+                == clean_username
+            )
+            .first()
+        )
+
+        if not user:
+
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
+
+        chat_ids = [
+            item.chat_id
+            for item in (
+                db.query(Chat)
+                .filter(
+                    Chat.username
+                    == user.username
+                )
+                .all()
+            )
+        ]
+
+        message_count = 0
+
+        if chat_ids:
+
+            message_count = (
+                db.query(Message)
+                .filter(
+                    Message.chat_id.in_(
+                        chat_ids
+                    )
+                )
+                .count()
+            )
+
+        recent_chats = (
+            db.query(Chat)
+            .filter(
+                Chat.username
+                == user.username
+            )
+            .order_by(
+                Chat.created_at.desc()
+            )
+            .limit(5)
+            .all()
+        )
+
+        return {
+
+            "username":
+                user.username,
+
+            "email":
+                user.email,
+
+            "email_verified":
+                user.email_verified,
+
+            "created_at":
+                (
+                    user.created_at.isoformat()
+                    if user.created_at
+                    else None
+                ),
+
+            "is_admin":
+                is_admin_username(
+                    user.username
+                ),
+
+            "chat_count":
+                len(chat_ids),
+
+            "message_count":
+                message_count,
+
+            "document_count":
+                (
+                    db.query(
+                        RagDocument
+                    )
+                    .filter(
+                        RagDocument.username
+                        == user.username
+                    )
+                    .count()
+                ),
+
+            "rag_chunk_count":
+                (
+                    db.query(
+                        RagChunk
+                    )
+                    .filter(
+                        RagChunk.username
+                        == user.username
+                    )
+                    .count()
+                ),
+
+            "memory_count":
+                (
+                    db.query(
+                        UserMemory
+                    )
+                    .filter(
+                        UserMemory.username
+                        == user.username
+                    )
+                    .count()
+                ),
+
+            "recent_chats": [
+
+                {
+                    "chat_id":
+                        chat.chat_id,
+
+                    "title":
+                        chat.title,
+
+                    "created_at":
+                        (
+                            chat.created_at
+                            .isoformat()
+                            if chat.created_at
+                            else None
+                        ),
+                }
+
+                for chat
+                in recent_chats
+            ],
+        }
+
+    finally:
+
+        db.close()
+
+
 # =========================================================
 
 # HEALTH

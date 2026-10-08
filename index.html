@@ -1611,6 +1611,128 @@ input {
     background: var(--surface-2);
 }
 
+
+
+/* =====================================
+   ADMIN USER SEARCH / DETAILS
+===================================== */
+
+.admin-search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.admin-search-input {
+    flex: 1;
+    padding: 11px 12px;
+    border:
+        1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+}
+
+.admin-search-input:focus {
+    border-color: #3b82f6;
+}
+
+.admin-view-btn {
+    border:
+        1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 7px 12px;
+    cursor: pointer;
+}
+
+.admin-view-btn:hover {
+    background: var(--surface-3);
+}
+
+.admin-user-card {
+    background: var(--surface);
+    color: var(--text);
+    width: min(650px, 96vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+}
+
+.admin-user-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.admin-user-info {
+    background:
+        var(--surface-2);
+    border:
+        1px solid
+        var(--border-light);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.admin-user-info-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.admin-user-info-value {
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.admin-recent-chats {
+    margin-top: 20px;
+}
+
+.admin-recent-chat {
+    padding: 10px 12px;
+    border:
+        1px solid
+        var(--border-light);
+    border-radius: 9px;
+    margin-top: 8px;
+    background:
+        var(--surface-2);
+}
+
+.admin-recent-chat-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.admin-recent-chat-time {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+@media(max-width: 600px) {
+
+    .admin-user-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+    .admin-search-row {
+        flex-direction:
+            column;
+    }
+}
+
 </style>
 </head>
 
@@ -2344,6 +2466,18 @@ input {
     Users
 </h3>
 
+<div class="admin-search-row">
+
+<input
+    id="adminUserSearch"
+    class="admin-search-input"
+    placeholder="🔎 Search by username or email..."
+    oninput="searchAdminUsers()"
+>
+
+</div>
+
+
 
 <div class="admin-table-wrap">
 
@@ -2359,6 +2493,7 @@ input {
     <th>Documents</th>
     <th>Memories</th>
     <th>Created</th>
+    <th>Action</th>
 </tr>
 
 </thead>
@@ -2367,7 +2502,7 @@ input {
 <tbody id="adminUsersTable">
 
 <tr>
-    <td colspan="7">
+    <td colspan="8">
         Loading...
     </td>
 </tr>
@@ -2375,6 +2510,222 @@ input {
 </tbody>
 
 </table>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<!-- ADMIN USER DETAILS -->
+
+<div
+    id="adminUserDetailsModal"
+    class="modal-overlay hidden"
+>
+
+<div class="admin-user-card">
+
+<div class="settings-header">
+
+<h2>
+    👤 User Details
+</h2>
+
+<button
+    class="close-btn"
+    onclick="closeAdminUserDetails()"
+>
+    ×
+</button>
+
+</div>
+
+
+<div
+    id="adminUserDetailsMessage"
+    class="settings-message"
+></div>
+
+
+<div class="admin-user-grid">
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    Username
+</div>
+
+<div
+    id="adminDetailUsername"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    Email
+</div>
+
+<div
+    id="adminDetailEmail"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    Email Verified
+</div>
+
+<div
+    id="adminDetailVerified"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    Admin
+</div>
+
+<div
+    id="adminDetailIsAdmin"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    Chats
+</div>
+
+<div
+    id="adminDetailChats"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    Messages
+</div>
+
+<div
+    id="adminDetailMessages"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    RAG Documents
+</div>
+
+<div
+    id="adminDetailDocuments"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    RAG Chunks
+</div>
+
+<div
+    id="adminDetailChunks"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    Saved Memories
+</div>
+
+<div
+    id="adminDetailMemories"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+
+<div class="admin-user-info">
+
+<div class="admin-user-info-label">
+    Account Created
+</div>
+
+<div
+    id="adminDetailCreated"
+    class="admin-user-info-value"
+>
+    -
+</div>
+
+</div>
+
+</div>
+
+
+<div class="admin-recent-chats">
+
+<h3>
+    Recent Chats
+</h3>
+
+<div
+    id="adminRecentChats"
+>
+    Loading...
+</div>
 
 </div>
 
@@ -2634,6 +2985,8 @@ let isGenerating = false;
 
 let ragDocuments = [];
 let selectedRagDocumentId = null;
+
+let adminUsersCache = [];
 
 
 /* =====================================
@@ -6994,6 +7347,20 @@ async function openAdminDashboard() {
     );
 
 
+    const searchInput =
+        document.getElementById(
+            "adminUserSearch"
+        );
+
+
+    if (searchInput) {
+
+        searchInput.value =
+            "";
+
+    }
+
+
     setMessage(
         "adminMessage",
         "Loading dashboard...",
@@ -7078,8 +7445,11 @@ async function openAdminDashboard() {
                 stats.memories ?? 0;
 
 
+        adminUsersCache =
+            usersData.users || [];
+
         renderAdminUsers(
-            usersData.users || []
+            adminUsersCache
         );
 
 
@@ -7111,42 +7481,33 @@ function renderAdminUsers(
             "adminUsersTable"
         );
 
-
     tbody.innerHTML = "";
 
 
-    if (
-        !users.length
-    ) {
+    if (!users.length) {
 
         const row =
             document.createElement(
                 "tr"
             );
 
-
         const cell =
             document.createElement(
                 "td"
             );
 
-
-        cell.colSpan = 7;
-
+        cell.colSpan = 8;
 
         cell.textContent =
             "No users found.";
-
 
         row.appendChild(
             cell
         );
 
-
         tbody.appendChild(
             row
         );
-
 
         return;
 
@@ -7164,24 +7525,19 @@ function renderAdminUsers(
 
             const values = [
 
-                user.username
-                || "",
+                user.username || "",
 
-                user.email
-                || "",
+                user.email || "",
 
                 user.email_verified
                     ? "✓ Yes"
                     : "No",
 
-                user.chat_count
-                ?? 0,
+                user.chat_count ?? 0,
 
-                user.document_count
-                ?? 0,
+                user.document_count ?? 0,
 
-                user.memory_count
-                ?? 0,
+                user.memory_count ?? 0,
 
                 user.created_at
                     ? new Date(
@@ -7203,11 +7559,8 @@ function renderAdminUsers(
                             "td"
                         );
 
-
                     cell.textContent =
-                        String(
-                            value
-                        );
+                        String(value);
 
 
                     if (
@@ -7229,12 +7582,385 @@ function renderAdminUsers(
             );
 
 
+            const actionCell =
+                document.createElement(
+                    "td"
+                );
+
+
+            const viewButton =
+                document.createElement(
+                    "button"
+                );
+
+
+            viewButton.className =
+                "admin-view-btn";
+
+
+            viewButton.textContent =
+                "View";
+
+
+            viewButton.onclick =
+                () =>
+                    viewAdminUser(
+                        user.username
+                    );
+
+
+            actionCell.appendChild(
+                viewButton
+            );
+
+
+            row.appendChild(
+                actionCell
+            );
+
+
             tbody.appendChild(
                 row
             );
 
         }
     );
+
+}
+
+
+function searchAdminUsers() {
+
+    const input =
+        document.getElementById(
+            "adminUserSearch"
+        );
+
+
+    const query =
+        (
+            input.value || ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    if (!query) {
+
+        renderAdminUsers(
+            adminUsersCache
+        );
+
+        return;
+
+    }
+
+
+    const filtered =
+        adminUsersCache.filter(
+            user => {
+
+                const username =
+                    (
+                        user.username
+                        || ""
+                    )
+                    .toLowerCase();
+
+
+                const email =
+                    (
+                        user.email
+                        || ""
+                    )
+                    .toLowerCase();
+
+
+                return (
+                    username.includes(
+                        query
+                    )
+                    ||
+                    email.includes(
+                        query
+                    )
+                );
+
+            }
+        );
+
+
+    renderAdminUsers(
+        filtered
+    );
+
+}
+
+
+async function viewAdminUser(
+    username
+) {
+
+    const modal =
+        document.getElementById(
+            "adminUserDetailsModal"
+        );
+
+
+    modal.classList.remove(
+        "hidden"
+    );
+
+
+    setMessage(
+        "adminUserDetailsMessage",
+        "Loading user details...",
+        true
+    );
+
+
+    document
+        .getElementById(
+            "adminRecentChats"
+        )
+        .textContent =
+            "Loading...";
+
+
+    try {
+
+        const response =
+            await request(
+                "/admin/users/"
+                + encodeURIComponent(
+                    username
+                )
+            );
+
+
+        const user =
+            await parseResponse(
+                response
+            );
+
+
+        document
+            .getElementById(
+                "adminDetailUsername"
+            )
+            .textContent =
+                user.username || "-";
+
+
+        document
+            .getElementById(
+                "adminDetailEmail"
+            )
+            .textContent =
+                user.email || "-";
+
+
+        document
+            .getElementById(
+                "adminDetailVerified"
+            )
+            .textContent =
+                user.email_verified
+                    ? "✓ Yes"
+                    : "No";
+
+
+        document
+            .getElementById(
+                "adminDetailIsAdmin"
+            )
+            .textContent =
+                user.is_admin
+                    ? "✓ Yes"
+                    : "No";
+
+
+        document
+            .getElementById(
+                "adminDetailChats"
+            )
+            .textContent =
+                user.chat_count
+                ?? 0;
+
+
+        document
+            .getElementById(
+                "adminDetailMessages"
+            )
+            .textContent =
+                user.message_count
+                ?? 0;
+
+
+        document
+            .getElementById(
+                "adminDetailDocuments"
+            )
+            .textContent =
+                user.document_count
+                ?? 0;
+
+
+        document
+            .getElementById(
+                "adminDetailChunks"
+            )
+            .textContent =
+                user.rag_chunk_count
+                ?? 0;
+
+
+        document
+            .getElementById(
+                "adminDetailMemories"
+            )
+            .textContent =
+                user.memory_count
+                ?? 0;
+
+
+        document
+            .getElementById(
+                "adminDetailCreated"
+            )
+            .textContent =
+                user.created_at
+                    ? new Date(
+                        user.created_at
+                    ).toLocaleString()
+                    : "-";
+
+
+        renderAdminRecentChats(
+            user.recent_chats || []
+        );
+
+
+        setMessage(
+            "adminUserDetailsMessage",
+            "User details loaded.",
+            true
+        );
+
+
+    } catch (error) {
+
+        setMessage(
+            "adminUserDetailsMessage",
+            error.message
+        );
+
+    }
+
+}
+
+
+function renderAdminRecentChats(
+    chats
+) {
+
+    const container =
+        document.getElementById(
+            "adminRecentChats"
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    if (!chats.length) {
+
+        container.textContent =
+            "No chats found.";
+
+        return;
+
+    }
+
+
+    chats.forEach(
+        chat => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "admin-recent-chat";
+
+
+            const title =
+                document.createElement(
+                    "div"
+                );
+
+
+            title.className =
+                "admin-recent-chat-title";
+
+
+            title.textContent =
+                chat.title
+                || "New Chat";
+
+
+            const time =
+                document.createElement(
+                    "div"
+                );
+
+
+            time.className =
+                "admin-recent-chat-time";
+
+
+            time.textContent =
+                chat.created_at
+                    ? new Date(
+                        chat.created_at
+                    ).toLocaleString()
+                    : "";
+
+
+            item.appendChild(
+                title
+            );
+
+
+            item.appendChild(
+                time
+            );
+
+
+            container.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+function closeAdminUserDetails() {
+
+    document
+        .getElementById(
+            "adminUserDetailsModal"
+        )
+        .classList
+        .add(
+            "hidden"
+        );
 
 }
 
