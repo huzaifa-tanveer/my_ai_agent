@@ -10424,5 +10424,62 @@ if (token) {
     <button type="button" onclick="openTermsOfUse()">Terms of Use</button>
 </div>
 
+
+<script>
+/* =====================================
+   WORKING PRIVACY / TERMS MODALS
+===================================== */
+
+function openPrivacyPolicy() {
+    const modal = document.getElementById("privacyModal");
+    if (modal) {
+        modal.classList.remove("hidden");
+    }
+}
+
+function closePrivacyPolicy() {
+    const modal = document.getElementById("privacyModal");
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+}
+
+function openTermsOfUse() {
+    const modal = document.getElementById("termsModal");
+    if (modal) {
+        modal.classList.remove("hidden");
+    }
+}
+
+function closeTermsOfUse() {
+    const modal = document.getElementById("termsModal");
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+}
+
+/* Close legal modal by clicking the dark backdrop */
+document.addEventListener("click", function (event) {
+    const privacyModal = document.getElementById("privacyModal");
+    const termsModal = document.getElementById("termsModal");
+
+    if (privacyModal && event.target === privacyModal) {
+        closePrivacyPolicy();
+    }
+
+    if (termsModal && event.target === termsModal) {
+        closeTermsOfUse();
+    }
+});
+
+/* Escape key closes legal modals */
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        closePrivacyPolicy();
+        closeTermsOfUse();
+    }
+});
+</script>
+
 </body>
 </html>
