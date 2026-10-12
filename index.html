@@ -3386,6 +3386,12 @@ button:disabled {
     }
 }
 
+
+/* Hide legal footer while the logged-in app is open */
+body:has(#appScreen:not(.hidden)) .auth-legal-links {
+    display: none !important;
+}
+
 </style>
 </head>
 
@@ -10235,6 +10241,188 @@ if (token) {
 }
 
 </script>
+
+
+<!-- =====================================
+     PRIVACY POLICY / TERMS
+===================================== -->
+
+<div id="privacyModal" class="modal-overlay hidden">
+    <div class="legal-modal-card">
+        <div class="legal-modal-header">
+            <h2>Privacy Policy</h2>
+            <button class="close-btn" onclick="closePrivacyPolicy()">×</button>
+        </div>
+
+        <div class="legal-content">
+            <p class="legal-muted">Last updated: October 2026</p>
+
+            <p>
+                My AI Agent is an AI-powered demonstration and portfolio application.
+                This Privacy Policy explains what information may be collected and how
+                it is used when you use the service.
+            </p>
+
+            <h3>1. Information We Collect</h3>
+            <ul>
+                <li>Your username and email address.</li>
+                <li>Your password in hashed form.</li>
+                <li>Your chat conversations and messages.</li>
+                <li>Information you choose to save as AI memory.</li>
+                <li>Documents you upload for AI or RAG processing.</li>
+                <li>Basic application activity required to operate the service.</li>
+            </ul>
+
+            <h3>2. How Information Is Used</h3>
+            <p>
+                Information is used to provide authentication, AI conversations,
+                saved chat history, document question answering, memory, account
+                recovery and administration features.
+            </p>
+
+            <h3>3. AI Processing</h3>
+            <p>
+                Messages or other content submitted to AI features may be sent to
+                third-party AI providers used by the application in order to
+                generate responses.
+            </p>
+            <p>
+                Do not submit highly sensitive, confidential, financial, medical,
+                legal or private information that you do not want processed by
+                external AI services.
+            </p>
+
+            <h3>4. Uploaded Files</h3>
+            <p>
+                Files uploaded to the application may be processed for AI analysis
+                or retrieval-augmented generation. Only upload files you have
+                permission to use.
+            </p>
+
+            <h3>5. Website / URL Reader</h3>
+            <p>
+                When you submit a public webpage URL, the application may retrieve
+                publicly available content from that webpage for analysis.
+            </p>
+
+            <h3>6. Data Security</h3>
+            <p>
+                Reasonable technical measures are used to protect accounts and
+                stored information, including password hashing, authenticated
+                access and user-level data separation. No internet service can
+                guarantee absolute security.
+            </p>
+
+            <h3>7. Account Deletion</h3>
+            <p>
+                Users may delete their account through the application where this
+                functionality is available. Associated account data is removed
+                according to the application's implemented deletion process.
+            </p>
+
+            <h3>8. Third-Party Services</h3>
+            <p>
+                The application may rely on third-party services for AI processing,
+                hosting, databases, email delivery and web search.
+            </p>
+
+            <h3>9. Changes to This Policy</h3>
+            <p>
+                This Privacy Policy may be updated as the project develops.
+            </p>
+
+            <h3>10. Contact</h3>
+            <p>
+                For questions about this application or its privacy practices,
+                contact the project owner through the public project or GitHub profile.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div id="termsModal" class="modal-overlay hidden">
+    <div class="legal-modal-card">
+        <div class="legal-modal-header">
+            <h2>Terms of Use</h2>
+            <button class="close-btn" onclick="closeTermsOfUse()">×</button>
+        </div>
+
+        <div class="legal-content">
+            <p class="legal-muted">Last updated: October 2026</p>
+
+            <p>
+                By using My AI Agent, you agree to these Terms of Use.
+                This application is provided primarily as an AI development,
+                demonstration and portfolio project.
+            </p>
+
+            <h3>1. Acceptable Use</h3>
+            <ul>
+                <li>Do not attempt unauthorized access to other accounts or systems.</li>
+                <li>Do not upload malicious files or harmful content.</li>
+                <li>Do not intentionally disrupt or overload the service.</li>
+                <li>Do not attempt to bypass security or usage restrictions.</li>
+                <li>Do not use the service for unlawful activity.</li>
+            </ul>
+
+            <h3>2. AI-Generated Content</h3>
+            <p>
+                AI-generated responses may be inaccurate, incomplete or outdated.
+                Verify important information before relying on it.
+            </p>
+            <p>
+                The service is not a substitute for professional legal, medical,
+                financial or other qualified professional advice.
+            </p>
+
+            <h3>3. User Content</h3>
+            <p>
+                You remain responsible for messages, files and URLs you submit.
+                Do not upload content you do not have permission to use.
+            </p>
+
+            <h3>4. Service Availability</h3>
+            <p>
+                The service is provided on an "as available" basis and may be
+                affected by maintenance, hosting limits or third-party API limits.
+            </p>
+
+            <h3>5. Accounts</h3>
+            <p>
+                Users are responsible for keeping their login credentials secure.
+            </p>
+
+            <h3>6. Abuse and Access Restrictions</h3>
+            <p>
+                Access may be limited or disabled if the application is abused,
+                security restrictions are bypassed, or excessive resources are used.
+            </p>
+
+            <h3>7. No Warranty</h3>
+            <p>
+                The application is provided without guarantees that every feature
+                or AI response will always be accurate, uninterrupted or error-free.
+            </p>
+
+            <h3>8. Limitation of Responsibility</h3>
+            <p>
+                Users are responsible for decisions made based on AI-generated
+                responses or information obtained through the application.
+            </p>
+
+            <h3>9. Changes</h3>
+            <p>
+                These Terms may be updated as the application evolves.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="auth-legal-links">
+    <button type="button" onclick="openPrivacyPolicy()">Privacy Policy</button>
+    <span>•</span>
+    <button type="button" onclick="openTermsOfUse()">Terms of Use</button>
+</div>
 
 </body>
 </html>
