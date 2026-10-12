@@ -215,6 +215,27 @@ ALLOWED_ORIGINS = [
 ]
 
 
+# =========================================================
+# DAILY USAGE LIMITS
+# =========================================================
+
+DAILY_CHAT_LIMIT = int(
+    os.getenv("DAILY_CHAT_LIMIT", "50")
+)
+
+DAILY_RAG_UPLOAD_LIMIT = int(
+    os.getenv("DAILY_RAG_UPLOAD_LIMIT", "10")
+)
+
+DAILY_RAG_ASK_LIMIT = int(
+    os.getenv("DAILY_RAG_ASK_LIMIT", "30")
+)
+
+DAILY_URL_READER_LIMIT = int(
+    os.getenv("DAILY_URL_READER_LIMIT", "20")
+)
+
+
 ADMIN_USERNAMES = {
     item.strip().lower()
     for item in os.getenv("ADMIN_USERNAMES", "").split(",")
@@ -1280,6 +1301,40 @@ class RagChunk(Base):
     )
 
 
+class UsageEvent(Base):
+
+    __tablename__ = "usage_events"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    username = Column(
+        String(100),
+        ForeignKey(
+            "users.username",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    action = Column(
+        String(40),
+        nullable=False,
+        index=True,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+        index=True,
+    )
+
+
 Base.metadata.create_all(
 
     bind=engine
@@ -2018,6 +2073,145 @@ def require_admin(
         )
 
     return username
+
+
+# =========================================================
+# DAILY USAGE LIMIT HELPERS
+# =========================================================
+
+USAGE_LIMITS = {
+    "chat": DAILY_CHAT_LIMIT,
+    "rag_upload": DAILY_RAG_UPLOAD_LIMIT,
+    "rag_ask": DAILY_RAG_ASK_LIMIT,
+    "url_reader": DAILY_URL_READER_LIMIT,
+}
+
+
+def _utc_day_start():
+    now = datetime.utcnow()
+    return datetime.combine(
+        now.date(),
+        datetime.min.time(),
+    )
+
+
+def get_daily_usage(
+    username,
+    action,
+):
+    limit = USAGE_LIMITS.get(action)
+
+    if limit is None:
+        return {
+            "used": 0,
+            "limit": None,
+            "remaining": None,
+        }
+
+    db = SessionLocal()
+
+    try:
+        used = (
+            db.query(UsageEvent)
+            .filter(
+                UsageEvent.username == username,
+                UsageEvent.action == action,
+                UsageEvent.created_at >= _utc_day_start(),
+            )
+            .count()
+        )
+
+        return {
+            "used": used,
+            "limit": limit,
+            "remaining": max(limit - used, 0),
+        }
+
+    finally:
+        db.close()
+
+
+def enforce_daily_usage_limit(
+    username,
+    action,
+):
+    # Admin users are exempt from demo limits.
+    if is_admin_username(username):
+        return
+
+    limit = USAGE_LIMITS.get(action)
+
+    if limit is None:
+        return
+
+    db = SessionLocal()
+
+    try:
+        used = (
+            db.query(UsageEvent)
+            .filter(
+                UsageEvent.username == username,
+                UsageEvent.action == action,
+                UsageEvent.created_at >= _utc_day_start(),
+            )
+            .count()
+        )
+
+        if used >= limit:
+            label = {
+                "chat": "AI chat",
+                "rag_upload": "RAG upload",
+                "rag_ask": "RAG question",
+                "url_reader": "URL Reader",
+            }.get(action, "request")
+
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    f"Daily {label} limit reached "
+                    f"({limit} per day). "
+                    "Please try again tomorrow."
+                ),
+            )
+
+        db.add(
+            UsageEvent(
+                username=username,
+                action=action,
+            )
+        )
+
+        db.commit()
+
+    finally:
+        db.close()
+
+
+@app.get("/usage")
+def usage_status(
+    authorization: Optional[str]
+    = Header(None),
+):
+    username = get_current_user(
+        authorization
+    )
+
+    if is_admin_username(username):
+        return {
+            "admin_exempt": True,
+            "usage": {},
+        }
+
+    return {
+        "admin_exempt": False,
+        "usage": {
+            action: get_daily_usage(
+                username,
+                action,
+            )
+            for action in USAGE_LIMITS
+        },
+    }
 
 
 # =========================================================
@@ -7246,6 +7440,13 @@ def chat_endpoint(
 
 
 
+    enforce_daily_usage_limit(
+        username,
+        "chat",
+    )
+
+
+
     db = SessionLocal()
 
 
@@ -8273,6 +8474,11 @@ async def rag_upload_document(
 ):
     username = get_current_user(authorization)
 
+    enforce_daily_usage_limit(
+        username,
+        "rag_upload",
+    )
+
     original_name = os.path.basename(
         file.filename or "document"
     )
@@ -8582,6 +8788,11 @@ def rag_ask(
 ):
     username = get_current_user(authorization)
 
+    enforce_daily_usage_limit(
+        username,
+        "rag_ask",
+    )
+
     question = request.question.strip()
 
     if not question:
@@ -8865,7 +9076,12 @@ def ask_webpage(
     data: UrlReaderRequest,
     authorization: Optional[str] = Header(None),
 ):
-    get_current_user(authorization)
+    username = get_current_user(authorization)
+
+    enforce_daily_usage_limit(
+        username,
+        "url_reader",
+    )
 
     try:
         page = read_webpage(data.url)
@@ -9537,6 +9753,11 @@ def chat_stream_endpoint(
     authorization: Optional[str] = Header(None),
 ):
     username = get_current_user(authorization)
+
+    enforce_daily_usage_limit(
+        username,
+        "chat",
+    )
 
     # Validate ownership before starting the stream.
     db = SessionLocal()
