@@ -3392,6 +3392,10 @@ body:has(#appScreen:not(.hidden)) .auth-legal-links {
     display: none !important;
 }
 
+
+/* DAILY USAGE UI */
+.usage-grid{display:grid;grid-template-columns:1fr;gap:10px}.usage-card{padding:12px;border:1px solid var(--border-light);border-radius:10px;background:var(--surface-2)}.usage-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:13px}.usage-top strong{font-size:12px;color:var(--muted);white-space:nowrap}.usage-track{width:100%;height:8px;background:var(--border-light);border-radius:999px;overflow:hidden}.usage-bar{width:0%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#3b82f6,#8b5cf6);transition:width .25s ease}.usage-remaining{margin-top:6px;color:var(--muted);font-size:11px}.usage-admin-notice{margin-bottom:12px;padding:11px 12px;border:1px solid rgba(59,130,246,.25);border-radius:9px;background:rgba(59,130,246,.08);color:#3b82f6;font-size:13px}
+
 </style>
 </head>
 
@@ -4645,6 +4649,20 @@ body:has(#appScreen:not(.hidden)) .auth-legal-links {
 
 </div>
 
+
+
+<div class="settings-section">
+<h3>📊 Daily Usage</h3>
+<p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Your current usage for today.</p>
+<div id="usageAdminNotice" class="usage-admin-notice hidden">Admin account — daily usage limits are disabled.</div>
+<div id="usageGrid" class="usage-grid">
+<div class="usage-card"><div class="usage-top"><span>💬 AI Chat</span><strong id="usageChatText">Loading...</strong></div><div class="usage-track"><div id="usageChatBar" class="usage-bar"></div></div><div id="usageChatRemaining" class="usage-remaining"></div></div>
+<div class="usage-card"><div class="usage-top"><span>📄 RAG Uploads</span><strong id="usageRagUploadText">Loading...</strong></div><div class="usage-track"><div id="usageRagUploadBar" class="usage-bar"></div></div><div id="usageRagUploadRemaining" class="usage-remaining"></div></div>
+<div class="usage-card"><div class="usage-top"><span>📚 RAG Questions</span><strong id="usageRagAskText">Loading...</strong></div><div class="usage-track"><div id="usageRagAskBar" class="usage-bar"></div></div><div id="usageRagAskRemaining" class="usage-remaining"></div></div>
+<div class="usage-card"><div class="usage-top"><span>🌐 URL Reader</span><strong id="usageUrlReaderText">Loading...</strong></div><div class="usage-track"><div id="usageUrlReaderBar" class="usage-bar"></div></div><div id="usageUrlReaderRemaining" class="usage-remaining"></div></div>
+</div>
+<div id="usageSettingsMessage" class="settings-message"></div>
+</div>
 
 <div class="settings-section">
 
@@ -8283,6 +8301,11 @@ function closeSettings() {
 
 }
 
+
+
+/* DAILY USAGE */
+function renderUsageItem(key,item){const map={chat:["usageChatText","usageChatBar","usageChatRemaining"],rag_upload:["usageRagUploadText","usageRagUploadBar","usageRagUploadRemaining"],rag_ask:["usageRagAskText","usageRagAskBar","usageRagAskRemaining"],url_reader:["usageUrlReaderText","usageUrlReaderBar","usageUrlReaderRemaining"]};const ids=map[key];if(!ids)return;const textEl=document.getElementById(ids[0]);const barEl=document.getElementById(ids[1]);const remainingEl=document.getElementById(ids[2]);if(!textEl||!barEl||!remainingEl)return;const used=Number(item?.used||0);const limit=Number(item?.limit||0);const remaining=Number(item?.remaining||0);textEl.textContent=limit>0?`${used} / ${limit}`:`${used}`;const percent=limit>0?Math.min(100,Math.max(0,(used/limit)*100)):0;barEl.style.width=`${percent}%`;remainingEl.textContent=limit>0?`${remaining} remaining today`:"";}
+async function loadDailyUsage(){const grid=document.getElementById("usageGrid");const adminNotice=document.getElementById("usageAdminNotice");if(!grid)return;try{const response=await request("/usage");const data=await parseResponse(response);if(data.admin_exempt){grid.classList.add("hidden");if(adminNotice)adminNotice.classList.remove("hidden");setMessage("usageSettingsMessage","",true);return;}grid.classList.remove("hidden");if(adminNotice)adminNotice.classList.add("hidden");const usage=data.usage||{};renderUsageItem("chat",usage.chat||{});renderUsageItem("rag_upload",usage.rag_upload||{});renderUsageItem("rag_ask",usage.rag_ask||{});renderUsageItem("url_reader",usage.url_reader||{});setMessage("usageSettingsMessage","",true);}catch(error){setMessage("usageSettingsMessage","Could not load daily usage: "+error.message);}}
 
 /* =====================================
    MEMORY MANAGEMENT
