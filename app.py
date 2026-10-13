@@ -23,6 +23,7 @@ import io
 import math
 import time
 import threading
+import redis
 import ipaddress
 import socket
 from html.parser import HTMLParser
@@ -160,6 +161,7 @@ JWT_SECRET = os.getenv(
 )
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+REDIS_URL = os.getenv("REDIS_URL")
 
 
 
@@ -395,6 +397,25 @@ app.add_middleware(
 _rate_limit_store = defaultdict(deque)
 _rate_limit_lock = threading.Lock()
 
+# Redis-backed limiter. The in-memory store above is kept only as a
+# graceful fallback if Redis is temporarily unavailable.
+redis_client = None
+
+if REDIS_URL:
+    try:
+        redis_client = redis.Redis.from_url(
+            REDIS_URL,
+            decode_responses=True,
+            socket_connect_timeout=3,
+            socket_timeout=3,
+        )
+    except Exception as error:
+        print(
+            "REDIS INITIALIZATION WARNING:",
+            str(error),
+        )
+        redis_client = None
+
 
 def _security_client_key(request):
     authorization = (
@@ -481,6 +502,48 @@ def _is_rate_limited(
         limit_config
     )
 
+    # -----------------------------------------------------
+    # Primary limiter: Redis
+    # Atomic INCR + EXPIRE prevents race conditions and
+    # works across multiple Railway app instances.
+    # -----------------------------------------------------
+    if redis_client is not None:
+        redis_key = (
+            "rate_limit:"
+            + hashlib.sha256(
+                f"{key}:{path}".encode()
+            ).hexdigest()
+        )
+
+        lua_script = """
+        local current = redis.call('INCR', KEYS[1])
+        if current == 1 then
+            redis.call('EXPIRE', KEYS[1], ARGV[1])
+        end
+        return current
+        """
+
+        try:
+            current = int(
+                redis_client.eval(
+                    lua_script,
+                    1,
+                    redis_key,
+                    window_seconds,
+                )
+            )
+
+            return current > limit
+
+        except Exception as error:
+            print(
+                "REDIS RATE LIMIT WARNING:",
+                str(error),
+            )
+
+    # -----------------------------------------------------
+    # Graceful fallback: original in-memory limiter
+    # -----------------------------------------------------
     now = time.time()
 
     store_key = (
