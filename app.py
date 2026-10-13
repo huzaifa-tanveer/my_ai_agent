@@ -372,7 +372,7 @@ app.add_middleware(
 
     CORSMiddleware,
 
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
 
     allow_credentials=False,
 
@@ -9677,37 +9677,27 @@ def health():
 
         return {
 
-            "status":
-
-                "ok",
-
-
-
-            "database":
-
-                "connected",
+            "status": "ok"
 
         }
 
 
 
-    except Exception as error:
+    except Exception:
 
 
 
-        return {
+        return JSONResponse(
 
-            "status":
+            status_code=503,
 
-                "error",
+            content={
 
+                "status": "error"
 
+            },
 
-            "database":
-
-                str(error),
-
-        }
+        )
 
 
 
