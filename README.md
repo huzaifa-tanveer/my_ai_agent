@@ -1,53 +1,37 @@
 # 🤖 My AI Agent
 
-A full-stack AI assistant built with **FastAPI, PostgreSQL, OpenRouter, and vanilla JavaScript**.
+A production-style full-stack AI assistant built with **FastAPI, PostgreSQL, Redis, OpenRouter, and vanilla JavaScript**.
 
-The application provides real-time AI chat, persistent conversations, long-term memory, document-based RAG, URL analysis, file tools, authentication, email verification, an admin dashboard, analytics, and security protections.
+My AI Agent combines real-time AI chat, persistent conversations, long-term memory, document-based RAG, website analysis, authentication, admin analytics, usage controls, monitoring, and production-focused security in one deployable application.
 
-## 🌐 Live Application
+## 🌐 Live Demo
 
 **Production:**  
 https://myaiagent-production-649a.up.railway.app
 
-## ✨ Features
+**GitHub:**  
+https://github.com/huzaifa-tanveer/my_ai_agent
+
+---
+
+## ✨ Key Features
 
 ### 💬 AI Chat
-
-- Real-time streaming AI responses
-- Multiple chat conversations
-- Persistent chat history
-- Rename chats
-- Delete chats
-- Search chats
-- Regenerate AI responses
+- Real-time streaming responses with Server-Sent Events
+- Multiple persistent conversations
+- Rename, delete, and search chats
 - Stop generation
-- Copy responses
-- Export conversations as TXT
-- Export conversations as PDF
+- Regenerate responses
+- Copy AI responses
+- Export conversations as TXT or PDF
 
-### 🧠 Smart Memory
-
-The assistant can store long-term user information in PostgreSQL.
-
-Users can:
-
-- Create memories
-- Update memories
-- Delete memories
-- View saved memories
-- Use saved context in future conversations
+### 🧠 Persistent Smart Memory
+- Create, edit, delete, and view saved memories
+- Reuse saved user context in future conversations
+- PostgreSQL-backed, per-user storage
 
 ### 📚 Retrieval-Augmented Generation (RAG)
-
-Users can upload private knowledge documents and ask questions about them.
-
-Supported files:
-
-- TXT
-- CSV
-- Text-based PDF
-
-RAG pipeline:
+Upload TXT, CSV, or text-based PDF documents and ask grounded questions about them.
 
 ```text
 Document Upload
@@ -62,64 +46,44 @@ PostgreSQL Storage
       ↓
 User Question
       ↓
-Semantic + Keyword Retrieval
+75% Semantic Retrieval
+25% Keyword Retrieval
       ↓
-Top Relevant Chunks
+Relevant Chunks
       ↓
 OpenRouter LLM
       ↓
 Grounded Answer
 ```
 
-The retrieval system uses **hybrid retrieval**:
-
-```text
-75% Semantic Similarity
-25% Keyword Similarity
-```
-
-If the embedding service is temporarily unavailable, the application can fall back to keyword-based retrieval.
+If embedding generation is unavailable, the application can fall back to keyword-based retrieval.
 
 ### 🌐 Website / URL Reader
+- Summarize a public webpage
+- Ask questions about page content
+- Generate grounded answers from fetched text
+- Block localhost/private-network targets for SSRF protection
 
-Users can provide a public webpage URL and:
-
-- Summarize the webpage
-- Ask questions about its content
-- Generate answers grounded in the webpage
-
-Private/local network URLs are blocked for security.
+> Some websites may block automated server-side access.
 
 ### 📎 File Tools
+- TXT
+- CSV
+- PDF
+- Per-user upload isolation
+- Frontend/backend file-size validation
 
-The AI assistant can work with uploaded:
-
-- TXT files
-- CSV files
-- PDF files
-
-Uploaded files are isolated per user.
-
-### 🛠 AI Tools
-
-The agent includes callable tools for:
-
-- Calculator operations
+### 🛠 Built-in AI Tools
+- Calculator
 - Current date/time
 - Web search
-- Memory storage
-- Memory retrieval
-- TXT reading
-- CSV reading
-- PDF reading
+- Memory storage/retrieval
+- TXT/CSV/PDF reading
 - Website reading
 
-### 🔐 Authentication
-
-Authentication includes:
-
-- Account registration
-- Password hashing with bcrypt
+### 🔐 Authentication & Account Security
+- Registration
+- bcrypt password hashing
 - JWT authentication
 - Email verification
 - Verification-code resend
@@ -128,90 +92,75 @@ Authentication includes:
 - Password change
 - Account deletion
 
-### 📧 Email
-
-SMTP is used for:
-
-- Account verification codes
-- Password reset codes
-
 ### 🛡 Admin Dashboard
-
-Configured administrators receive access to a private admin dashboard.
-
-Admin features include:
-
-- Total users
-- Verified users
-- Total chats
-- Total messages
-- RAG document count
-- Saved memory count
-- User search
-- Detailed user information
-- User chat statistics
-- User RAG statistics
+- User, chat, message, RAG, and memory statistics
+- User search and detailed user information
 - Recent chats
+- 7-day platform analytics
 
-### 📊 Usage Analytics
+### 📈 Daily Usage Limits
+Persistent daily limits protect public demo resources.
 
-The admin dashboard includes 7-day analytics for:
+Default limits:
+- AI Chat: **50/day**
+- RAG Uploads: **10/day**
+- RAG Questions: **30/day**
+- URL Reader: **20/day**
 
-- New users
-- New chats
-- New messages
-- Daily activity
-- Recent platform activity
+Users can see current usage in **Profile / Settings**. Configured administrators are exempt.
 
 ### 🌙 User Interface
-
-- Light mode
-- Dark mode
+- Light/dark mode
 - Responsive mobile layout
 - Mobile sidebar
-- Loading states
-- Streaming indicators
-- Document management modal
+- Streaming/loading indicators
+- RAG document manager
 - URL Reader modal
 - Settings panel
-- Admin panel
+- Daily Usage dashboard
+- Admin dashboard
+- Privacy Policy and Terms of Use
 - Keyboard shortcuts
-- File-size validation
 
-## 🔒 Security
+---
 
-The project includes several security protections:
+## 🔒 Security & Reliability
 
 - bcrypt password hashing
-- JWT authentication
+- JWT authentication with production secret from environment variables
 - User ownership checks
 - Admin authorization
-- Email verification
-- Password reset tokens/codes
+- Email verification and password reset controls
 - Restricted CORS
-- API rate limiting
-- Request-size protection
-- File upload-size limits
+- Redis-backed API rate limiting
+- In-memory fallback if Redis is temporarily unavailable
+- Persistent per-user daily usage limits
+- Request-size and upload-size protection
 - User-isolated file access
-- Safer server error messages
+- Safer public error responses
 - Security response headers
 - SSRF protection for URL Reader
 - Private/localhost URL blocking
+- Safe `/health` endpoint without raw database errors
+- Sentry production error monitoring
+- PostgreSQL backup/recovery script
 
-The default maximum upload size is:
+Default maximum upload size:
 
 ```text
 10 MB
 ```
 
+---
+
 ## 🧰 Tech Stack
 
 ### Backend
-
 - Python
 - FastAPI
 - SQLAlchemy
 - PostgreSQL
+- Redis
 - OpenAI Python SDK
 - OpenRouter
 - PyJWT
@@ -219,7 +168,6 @@ The default maximum upload size is:
 - Pydantic
 
 ### AI / Retrieval
-
 - OpenRouter
 - Semantic embeddings
 - Hybrid retrieval
@@ -228,13 +176,11 @@ The default maximum upload size is:
 - DDGS web search
 
 ### File Processing
-
 - pandas
 - PyPDF
 - ReportLab
 
 ### Frontend
-
 - HTML
 - CSS
 - JavaScript
@@ -242,15 +188,57 @@ The default maximum upload size is:
 - Server-Sent Events
 - Marked.js
 
-### Deployment
-
+### Monitoring / Infrastructure
 - Railway
 - PostgreSQL
+- Redis
+- Sentry
 - GitHub
 
-## 📁 Project Structure
+---
 
-A simplified project structure:
+## 🧠 System Architecture
+
+```text
+                         ┌──────────────────┐
+                         │       User       │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │  HTML / CSS / JS │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │     FastAPI      │
+                         └────────┬─────────┘
+                                  │
+          ┌───────────────────────┼───────────────────────┐
+          │                       │                       │
+          ▼                       ▼                       ▼
+ ┌────────────────┐      ┌────────────────┐      ┌────────────────┐
+ │   PostgreSQL   │      │   OpenRouter   │      │ External Web   │
+ │ Users          │      │ Chat LLM       │      │ / DDGS Search  │
+ │ Chats          │      │ Embeddings     │      └────────────────┘
+ │ Messages       │      └────────────────┘
+ │ Memory         │
+ │ RAG Chunks     │
+ │ Usage Events   │
+ └────────────────┘
+          │
+          ▼
+ ┌────────────────┐
+ │     Redis      │
+ │ Rate Limiting  │
+ └────────────────┘
+
+ FastAPI errors ───────────────────────────────► Sentry
+```
+
+---
+
+## 📁 Project Structure
 
 ```text
 my_ai_agent/
@@ -258,6 +246,7 @@ my_ai_agent/
 ├── app.py
 ├── index.html
 ├── requirements.txt
+├── backup_my_ai_agent.ps1
 ├── .env
 ├── .gitignore
 │
@@ -266,25 +255,22 @@ my_ai_agent/
 └── README.md
 ```
 
-The `uploads/` directory contains user-uploaded files during application runtime.
+> `.env`, runtime uploads, local dumps, and credentials should never be committed to Git.
+
+---
 
 ## ⚙️ Environment Variables
 
-Create a `.env` file in the project root.
-
-Example:
-
 ```env
 OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_MODEL=openrouter/free
 
 DATABASE_URL=postgresql://username:password@host:port/database
+REDIS_URL=redis://username:password@host:port
 
 JWT_SECRET=replace_with_a_long_random_secret
 
-OPENROUTER_MODEL=openrouter/free
-
 RAG_EMBEDDING_MODEL=nvidia/llama-nemotron-embed-vl-1b-v2:free
-
 ADMIN_USERNAMES=your_admin_username
 
 SMTP_HOST=smtp.gmail.com
@@ -292,54 +278,43 @@ SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_password
 SMTP_FROM=your_email@gmail.com
-
 SMTP_USE_TLS=true
 SMTP_USE_SSL=false
-```
 
-Security configuration can also be controlled through environment variables such as:
+SENTRY_DSN=your_sentry_dsn
+SENTRY_ENVIRONMENT=production
+SENTRY_TRACES_SAMPLE_RATE=0.1
 
-```env
 MAX_UPLOAD_BYTES=10485760
 MAX_REQUEST_BYTES=12582912
-
 ALLOWED_ORIGINS=https://your-domain.com,http://127.0.0.1:8000
+
+DAILY_CHAT_LIMIT=50
+DAILY_RAG_UPLOAD_LIMIT=10
+DAILY_RAG_ASK_LIMIT=30
+DAILY_URL_READER_LIMIT=20
 ```
 
-> Never commit `.env`, API keys, SMTP passwords, JWT secrets, or database credentials to GitHub.
+> Never commit API keys, SMTP passwords, JWT secrets, database credentials, Redis credentials, or Sentry DSNs to GitHub.
+
+---
 
 ## 📦 Installation
 
-Clone the repository:
-
 ```bash
 git clone https://github.com/huzaifa-tanveer/my_ai_agent.git
-```
-
-Enter the project:
-
-```bash
 cd my_ai_agent
 ```
 
-Create a virtual environment:
-
-### Windows
+### Windows virtual environment
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-```
-
-Install dependencies:
-
-```powershell
 pip install -r requirements.txt
 ```
 
-## 📋 Main Dependencies
-
-The project uses:
+Main dependencies:
 
 ```text
 fastapi
@@ -356,33 +331,13 @@ PyJWT
 SQLAlchemy
 psycopg[binary]
 reportlab
+redis
+sentry-sdk[fastapi]
 ```
 
-## 🗄 PostgreSQL Setup
-
-Set the PostgreSQL connection string:
-
-```env
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
-```
-
-SQLAlchemy initializes the database models when the application starts.
-
-The application stores data including:
-
-- users
-- chats
-- messages
-- memories
-- email verification codes
-- password reset codes
-- RAG documents
-- RAG chunks
-- document embeddings
+---
 
 ## ▶️ Run Locally
-
-Start the FastAPI server:
 
 ```powershell
 uvicorn app:app --reload
@@ -394,68 +349,150 @@ Open:
 http://127.0.0.1:8000
 ```
 
-Health endpoint:
+Health check:
 
 ```text
 http://127.0.0.1:8000/health
 ```
 
-## 🔑 Admin Setup
+Healthy response:
 
-Add your username to:
-
-```env
-ADMIN_USERNAMES=yourusername
+```json
+{"status":"ok"}
 ```
 
-Multiple admins can be separated by commas:
+---
+
+## 🗄 PostgreSQL
+
+The application stores:
+- Users
+- Chats
+- Messages
+- Saved memories
+- Email verification codes
+- Password reset codes
+- RAG documents
+- RAG chunks
+- Embeddings
+- Daily usage events
+
+---
+
+## ⚡ Redis Rate Limiting
+
+Redis is the primary rate-limit store so rate limits work across app instances.
+
+Railway variable:
 
 ```env
-ADMIN_USERNAMES=user1,user2,user3
+REDIS_URL=${{Redis.REDIS_URL}}
 ```
 
-Restart/redeploy the application after changing environment variables.
+If Redis is temporarily unavailable, the app falls back to an in-memory limiter.
+
+---
+
+## 📊 Daily Usage Endpoint
+
+```text
+GET /usage
+```
+
+The frontend displays current usage and remaining quota inside **Profile / Settings**.
+
+---
+
+## 🩺 Health Check
+
+```text
+GET /health
+```
+
+Healthy response:
+
+```json
+{"status":"ok"}
+```
+
+Database failures return a generic error response without exposing raw exception details.
+
+---
+
+## 📡 Sentry Monitoring
+
+Configure:
+
+```env
+SENTRY_DSN=your_sentry_dsn
+SENTRY_ENVIRONMENT=production
+SENTRY_TRACES_SAMPLE_RATE=0.1
+```
+
+The backend reports unexpected production errors to Sentry with default PII sending disabled.
+
+---
+
+## 💾 Database Backups
+
+The repository includes:
+
+```text
+backup_my_ai_agent.ps1
+```
+
+The script:
+- Reads Railway's public PostgreSQL URL at runtime
+- Creates timestamped custom-format dumps
+- Stores backups locally
+- Deletes backups older than 14 days
+
+A Windows Task Scheduler job can run the script daily.
+
+> Local scheduled backups depend on the configured Windows machine/task environment being available. For higher-reliability production use, use managed/offsite backups.
+
+---
 
 ## 📚 RAG Usage
 
-1. Login to the application.
+1. Log in.
 2. Open **Documents / RAG**.
-3. Upload a TXT, CSV, or PDF document.
+3. Upload a TXT, CSV, or text-based PDF.
 4. Wait for processing.
-5. Select a specific document or search all documents.
+5. Select one document or search all documents.
 6. Enter a question.
-7. The system retrieves relevant document chunks.
+7. Relevant chunks are retrieved.
 8. The LLM generates a grounded answer.
 
-Existing RAG chunks can also be reindexed with embeddings through:
+Reindex existing chunks:
 
 ```text
 POST /rag/reindex
 ```
 
+---
+
 ## 🔌 Main API Endpoints
 
 ### Authentication
-
 ```text
-POST   /register
-POST   /login
-POST   /verify-email
-POST   /resend-verification-code
-POST   /forgot-password
-POST   /reset-password
+POST /register
+POST /login
+POST /verify-email
+POST /resend-verification-code
+POST /forgot-password
+POST /reset-password
 ```
 
 ### Account
-
 ```text
 GET    /profile
 POST   /change-password
 DELETE /account
+GET    /usage
 ```
 
 ### Memories
-
 ```text
 GET    /memories
 POST   /memories
@@ -464,35 +501,29 @@ DELETE /memories/{memory_id}
 ```
 
 ### Chats
-
 ```text
 POST   /chats
 GET    /chats
 GET    /chats/{chat_id}
 PATCH  /chats/{chat_id}/title
 DELETE /chats/{chat_id}
-
 POST   /chat
 POST   /chat/stream
-
 POST   /chats/{chat_id}/regenerate
 ```
 
 ### Chat Export
-
 ```text
 GET /chats/{chat_id}/export/txt
 GET /chats/{chat_id}/export/pdf
 ```
 
-### File Upload
-
+### Files
 ```text
 POST /upload
 ```
 
 ### RAG
-
 ```text
 POST   /rag/upload
 GET    /rag/documents
@@ -502,13 +533,11 @@ POST   /rag/reindex
 ```
 
 ### URL Reader
-
 ```text
 POST /url/ask
 ```
 
 ### Admin
-
 ```text
 GET /admin/status
 GET /admin/stats
@@ -518,160 +547,78 @@ GET /admin/analytics
 ```
 
 ### System
-
 ```text
 GET /health
 GET /
 ```
 
+---
+
 ## 🚀 Railway Deployment
 
-### 1. Push the project to GitHub
-
-```powershell
-git add .
-git commit -m "Prepare production deployment"
-git push
-```
-
-### 2. Create Railway Project
-
-Create a Railway service connected to the GitHub repository.
-
-### 3. Add PostgreSQL
-
-Add a PostgreSQL service to the Railway project.
-
-Set:
-
-```env
-DATABASE_URL=${{Postgres.DATABASE_URL}}
-```
-
-### 4. Add Environment Variables
-
-Configure:
-
-```text
-OPENROUTER_API_KEY
-JWT_SECRET
-DATABASE_URL
-OPENROUTER_MODEL
-RAG_EMBEDDING_MODEL
-ADMIN_USERNAMES
-SMTP_HOST
-SMTP_PORT
-SMTP_USER
-SMTP_PASSWORD
-SMTP_FROM
-SMTP_USE_TLS
-SMTP_USE_SSL
-ALLOWED_ORIGINS
-```
-
-### 5. Start Command
-
-Use:
+1. Connect the GitHub repository to Railway.
+2. Add PostgreSQL.
+3. Add Redis.
+4. Configure production environment variables.
+5. Use the start command:
 
 ```bash
 uvicorn app:app --host 0.0.0.0 --port $PORT
 ```
 
-Railway will automatically redeploy whenever new commits are pushed to the connected branch.
+Railway automatically redeploys when new commits are pushed to the connected branch.
 
-## 🩺 Health Check
+---
 
-The backend provides:
-
-```text
-GET /health
-```
-
-A healthy server should return a response indicating that the application and PostgreSQL database are available.
-
-## 🧠 System Architecture
+## 🧪 Production Checklist
 
 ```text
-                         ┌──────────────────┐
-                         │      User        │
-                         └────────┬─────────┘
-                                  │
-                                  ▼
-                         ┌──────────────────┐
-                         │ HTML/CSS/JS UI   │
-                         └────────┬─────────┘
-                                  │
-                                  ▼
-                         ┌──────────────────┐
-                         │     FastAPI      │
-                         └────────┬─────────┘
-                                  │
-              ┌───────────────────┼───────────────────┐
-              │                   │                   │
-              ▼                   ▼                   ▼
-      ┌───────────────┐   ┌──────────────┐   ┌───────────────┐
-      │  PostgreSQL   │   │  OpenRouter  │   │ External Web  │
-      │               │   │              │   │ / DDGS Search │
-      │ Users         │   │ Chat LLM     │   └───────────────┘
-      │ Chats         │   │ Embeddings   │
-      │ Messages      │   └──────────────┘
-      │ Memory        │
-      │ RAG Chunks    │
-      │ Embeddings    │
-      └───────────────┘
-```
-
-## 🧪 Recommended Production Tests
-
-Before releasing a new version, test:
-
-```text
-✓ Registration
-✓ Email verification
-✓ Login
-✓ Forgot password
-✓ Password reset
-✓ Normal chat
-✓ Streaming chat
-✓ Chat history
+✓ Registration and email verification
+✓ Login / logout
+✓ Forgot/reset password
+✓ Normal and streaming chat
+✓ Persistent chat history
+✓ Rename/delete/search chat
 ✓ Regenerate response
-✓ File upload
-✓ TXT reading
-✓ CSV reading
-✓ PDF reading
-✓ RAG upload
-✓ Semantic RAG question
-✓ RAG delete
+✓ File upload and TXT/CSV/PDF reading
+✓ RAG upload / ask / delete / reindex
 ✓ URL Reader
 ✓ Memory create/update/delete
-✓ Chat export TXT
-✓ Chat export PDF
-✓ Dark mode
-✓ Mobile layout
-✓ Admin Dashboard
-✓ Admin User Search
-✓ Admin Analytics
-✓ Logout
+✓ Daily Usage dashboard
+✓ TXT/PDF chat export
+✓ Dark mode and mobile layout
+✓ Admin Dashboard / user search / analytics
+✓ Privacy Policy / Terms
+✓ Redis connection
+✓ Sentry monitoring
+✓ /health response
+✓ Database backup
 ```
 
-## ⚠️ Notes
+---
 
-- Scanned PDFs without extractable text require OCR before they can be used by the current RAG document reader.
-- AI availability depends on the configured OpenRouter model/provider.
-- Free model endpoints may have rate limits.
-- Never place production secrets directly inside source code.
+## ⚠️ Current Limitations
+
+- Scanned PDFs without extractable text require OCR before the current RAG reader can use them.
+- Some websites block automated URL fetching.
+- AI availability depends on the configured OpenRouter provider/model.
+- Free model endpoints may impose rate or quota limits.
+- Local scheduled database backups depend on the configured Windows machine being available.
+
+---
 
 ## 👨‍💻 Author
 
-**Huzaifa Tanveer**
-
+**Huzaifa Tanveer**  
 AI / Python Developer
 
 GitHub:  
 https://github.com/huzaifa-tanveer
 
+---
+
 ## 📄 License
 
-This project is currently provided for educational, portfolio, and development purposes.
+This project is currently provided for **educational, portfolio, and development purposes**.
 
-Add a formal open-source license such as MIT if you plan to distribute the project publicly.
+Add a formal open-source license such as MIT before distributing or accepting external contributions under an open-source license.
