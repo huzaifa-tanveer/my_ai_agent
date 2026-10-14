@@ -10187,3 +10187,8 @@ def chat_stream_endpoint(
             "X-Accel-Buffering": "no",
         },
     )
+
+@app.get("/sentry-test")
+def sentry_test():
+    raise RuntimeError("Sentry test error")
+
