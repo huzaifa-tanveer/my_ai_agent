@@ -24,6 +24,8 @@ import math
 import time
 import threading
 import redis
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 import ipaddress
 import socket
 from html.parser import HTMLParser
@@ -162,6 +164,10 @@ JWT_SECRET = os.getenv(
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 REDIS_URL = os.getenv("REDIS_URL")
+
+SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
+SENTRY_ENVIRONMENT = os.getenv("SENTRY_ENVIRONMENT", "production").strip()
+SENTRY_TRACES_SAMPLE_RATE = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
 
 
 
@@ -351,6 +357,20 @@ if DATABASE_URL.startswith(
 
 
 
+
+
+# =========================================================
+# SENTRY MONITORING
+# =========================================================
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[FastApiIntegration()],
+        environment=SENTRY_ENVIRONMENT,
+        traces_sample_rate=max(0.0, min(SENTRY_TRACES_SAMPLE_RATE, 1.0)),
+        send_default_pii=False,
+    )
 
 # =========================================================
 

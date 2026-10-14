@@ -14,3 +14,4 @@ psycopg[binary]
 reportlab
 redis
 
+sentry-sdk[fastapi]
