@@ -10188,19 +10188,9 @@ def chat_stream_endpoint(
         },
     )
 
-@app.get("/sentry-test")
-def sentry_test():
-    raise RuntimeError("Sentry test error")
 
 
-@app.get("/sentry-test")
-def sentry_test():
-    sentry_sdk.capture_message(
-        "My AI Agent Sentry connection test",
-        level="error"
-    )
-    return {
-        "status": "sent",
-        "message": "Sentry test event sent"
-    }
+
+
+
 
